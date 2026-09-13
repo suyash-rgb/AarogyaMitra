@@ -32,6 +32,7 @@ import { getSimulatedResponse, mockDoctors, mockHospitals } from '../constants/m
 import { translations, getTranslation } from '../constants/translations';
 import { useAudioPlayer } from 'expo-audio';
 import { HospitalCard } from '../components/HospitalCard';
+import { getOrCreateDeviceId } from '../utils/userSession';
 
 const languages = [
   { code: 'en', name: 'English', native: 'English' },
@@ -511,11 +512,17 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
                                   };
                                   setMessages(prev => [...prev, locMsg]);
 
-                                  if (chat.isOfficial) {
-                                    try {
-                                      // Use the local IP of the machine running the FastAPI backend
-                                      const apiUrl = `http://10.228.232.83:8001/api/v1/healthcare-facilities/nearby?lat=${location.coords.latitude}&lon=${location.coords.longitude}&radius=5000`;
-                                      const response = await fetch(apiUrl);
+                                    if (chat.isOfficial) {
+                                      try {
+                                        const deviceId = await getOrCreateDeviceId();
+                                        // Use the local IP of the machine running the FastAPI backend
+                                        const apiUrl = `http://10.228.232.83:8001/api/v1/healthcare-facilities/nearby?lat=${location.coords.latitude}&lon=${location.coords.longitude}&radius=5000`;
+                                        const response = await fetch(apiUrl, {
+                                          headers: {
+                                            'Accept': 'application/json',
+                                            'X-Device-ID': deviceId
+                                          }
+                                        });
 
                                       if (!response.ok) {
                                         throw new Error("Failed to fetch nearby facilities");
