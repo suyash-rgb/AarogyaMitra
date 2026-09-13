@@ -1,13 +1,14 @@
-﻿import logging
+import logging
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text, select
 
 # Import database components
-from app.db.base import Base, User  
+from app.db.base import Base  
 from app.db.session import engine, get_session 
 from app.api.v1.endpoints.vision import router as vision_router
 from app.api.v1.endpoints.translation import router as translation_router
@@ -24,6 +25,25 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="ArogyaMitra API Backend"
 )
+
+# Enable CORS for frontend clients & Expo simulation
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Device Identification & Isolation Middleware
+@app.middleware("http")
+async def device_id_middleware(request: Request, call_next):
+    device_id = request.headers.get("X-Device-ID", "anonymous-device")
+    logger.info(f"[Device-ID: {device_id}] Request: {request.method} {request.url.path}")
+    
+    response = await call_next(request)
+    response.headers["X-Device-ID-Echo"] = device_id
+    return response
 
 # Register routers
 app.include_router(vision_router, prefix='/api/v1')
@@ -42,6 +62,15 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 async def root():
     return {
         "message": "Welcome to the ArogyaMitra Servers"
+    }
+
+@app.get("/api/v1/session-info", tags=["Session and Identity"])
+async def session_info(request: Request):
+    device_id = request.headers.get("X-Device-ID", "anonymous-device")
+    return {
+        "status": "active",
+        "device_id": device_id,
+        "message": f"Session isolated for device: {device_id}"
     }
 
 @app.get("/db-status", tags=["Health Check"])
