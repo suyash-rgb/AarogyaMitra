@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Linking, StyleSheet } from 'react-native';
-import { X, FileText, ExternalLink, HelpCircle, FileCheck, CheckCircle2 } from 'lucide-react-native';
+import { View, Text, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Linking, StyleSheet, Share } from 'react-native';
+import { X, FileText, ExternalLink, HelpCircle, FileCheck, CheckCircle2, Share2 } from 'lucide-react-native';
 import { getSchemeDetails } from '../services/apiService';
 
 const TABS = [
@@ -35,6 +35,29 @@ export const SchemeDetailsModal = ({ visible, onClose, schemeId }) => {
       setDetails(null);
     }
   }, [visible, schemeId]);
+
+  const handleShare = async () => {
+    if (!details) return;
+    try {
+      let url = '';
+      if (details.references && details.references.length > 0 && details.references[0].url) {
+        url = details.references[0].url;
+      } else {
+        // Fallback to a Google search link since myscheme slugs can be unpredictable
+        url = `https://www.google.com/search?q=${encodeURIComponent(details.scheme_name)}`;
+      }
+
+      const message = `Check out this government healthcare scheme: ${details.scheme_name}\n\n${details.brief_description || ''}\n\nLearn more: ${url}`;
+      
+      await Share.share({
+        message: message,
+        title: details.scheme_name,
+        url: url // Used by iOS
+      });
+    } catch (error) {
+      console.error("Error sharing:", error);
+    }
+  };
 
   const renderContent = () => {
     if (loading) {
@@ -162,9 +185,16 @@ export const SchemeDetailsModal = ({ visible, onClose, schemeId }) => {
             <Text style={styles.title} numberOfLines={2}>
               {details ? details.scheme_name : 'Scheme Details'}
             </Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <X size={24} color="#111B21" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {details && (
+                <TouchableOpacity onPress={handleShare} style={[styles.closeBtn, { marginRight: 16 }]}>
+                  <Share2 size={22} color="#128C7E" />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                <X size={24} color="#111B21" />
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Tabs */}
