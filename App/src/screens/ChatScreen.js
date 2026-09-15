@@ -37,35 +37,13 @@ import { getOrCreateDeviceId } from '../utils/userSession';
 import { searchSchemesRAG, getHealthcareSchemes, getNearbyFacilities, getStates } from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const languages = [
-  { code: 'en', name: 'English', native: 'English' },
-  { code: 'hi', name: 'Hindi', native: 'हिंदी' },
-  { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी' },
-  { code: 'mr', name: 'Marathi', native: 'मराठी' },
-  { code: 'bn', name: 'Bengali', native: 'বাংলা' },
-  { code: 'ta', name: 'Tamil', native: 'தமிழ்' },
-  { code: 'te', name: 'Telugu', native: 'తెలుగు' },
-  { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી' },
-  { code: 'kn', name: 'Kannada', native: 'ಕನ್ನಡ' },
-  { code: 'as', name: 'Assamese', native: 'অসমীয়া' },
-  { code: 'brx', name: 'Bodo', native: 'बड़ो' },
-  { code: 'doi', name: 'Dogri', native: 'डोगरी' },
-  { code: 'ks', name: 'Kashmiri', native: 'कॉशुर' },
-  { code: 'gom', name: 'Konkani', native: 'कोंकणी' },
-  { code: 'mai', name: 'Maithili', native: 'मैथिली' },
-  { code: 'ml', name: 'Malayalam', native: 'മലയാളം' },
-  { code: 'mni', name: 'Manipuri', native: 'মৈতৈলোন্' },
-  { code: 'ne', name: 'Nepali', native: 'नेपाली' },
-  { code: 'or', name: 'Odia', native: 'ଓଡ଼ିଆ' },
-  { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
-  { code: 'sa', name: 'Sanskrit', native: 'संस्कृतम्' },
-  { code: 'sat', name: 'Santali', native: 'ᱥᱟᱱᱛᱟᱲᱤ' },
-  { code: 'sd', name: 'Sindhi', native: 'سنڌي' },
-  { code: 'ur', name: 'Urdu', native: 'اردو' }
-];
+
 import { styles } from '../constants/styles';
-import RecordingBar from '../components/RecordingBar';
-import AudioMessage from '../components/AudioMessage';
+import { ChatHeader } from '../components/chat/ChatHeader';
+import { ChatInputBar } from '../components/chat/ChatInputBar';
+import { ChatMessageBubble } from '../components/chat/ChatMessageBubble';
+import { LanguagePickerModal } from '../components/chat/LanguagePickerModal';
+import { StatePickerModal } from '../components/chat/StatePickerModal';
 
 export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages }) {
   const player = useAudioPlayer(require('../../assets/notification.wav'));
@@ -249,13 +227,13 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
 
       const userLower = userText.toLowerCase();
 
-      const isDoctor = Object.keys(translations).some(l => 
-        (translations[l].doctor && userLower.includes(translations[l].doctor.toLowerCase())) || 
+      const isDoctor = Object.keys(translations).some(l =>
+        (translations[l].doctor && userLower.includes(translations[l].doctor.toLowerCase())) ||
         userLower.includes('talk to a doctor')
       );
 
-      const isBook = Object.keys(translations).some(l => 
-        (translations[l].book && userLower.includes(translations[l].book.toLowerCase())) || 
+      const isBook = Object.keys(translations).some(l =>
+        (translations[l].book && userLower.includes(translations[l].book.toLowerCase())) ||
         userLower.includes('book a consultation')
       );
 
@@ -271,7 +249,7 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
         (async () => {
           try {
             const data = await searchSchemesRAG(userText, userState);
-            
+
             const botMsg = {
               id: Date.now().toString(),
               text: data.answer,
@@ -345,7 +323,7 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
     setIsTyping(true);
     try {
       const data = await getHealthcareSchemes(stateName);
-      
+
       setIsTyping(false);
       if (data.items && data.items.length > 0) {
         const botMsg = {
@@ -448,336 +426,154 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
     }, 1200);
   };
 
+  const handleQuickReplyButtonPress = (btn) => {
+    const isKnowSchemes = Object.keys(translations).some(l => btn.includes(translations[l].knowSchemes) || btn.includes('Know Govt Schemes'));
+    if (isKnowSchemes) {
+      const tempMsg = {
+        id: Date.now().toString(),
+        text: btn,
+        sender: 'me',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, tempMsg]);
+
+      setTimeout(() => {
+        const botMsg = {
+          id: Date.now().toString(),
+          text: getTranslation(currentLanguage, 'selectState'),
+          sender: 'other',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        playSound();
+        setMessages(prev => [...prev, botMsg]);
+        setStateModalVisible(true);
+      }, 500);
+      return;
+    }
+
+    const isLocate = Object.keys(translations).some(l => btn.includes(translations[l].locate) || btn.includes('Locate a Healthcare Facility'));
+    if (isLocate) {
+      (async () => {
+        try {
+          const tempMsg = {
+            id: Date.now().toString(),
+            text: btn,
+            sender: 'me',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+          setMessages(prev => [...prev, tempMsg]);
+          setIsTyping(true);
+
+          let { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+            setTimeout(() => {
+              setIsTyping(false);
+              const botReply = getTranslation(currentLanguage, 'gps_denied') || "I need location access to find nearby healthcare facilities...";
+              const botMsg = { id: Date.now().toString(), text: botReply, sender: 'other', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+              setMessages(prev => [...prev, botMsg]);
+            }, 1000);
+            return;
+          }
+
+          let location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced, timeout: 10000 });
+          if (!location) location = await Location.getLastKnownPositionAsync();
+          if (!location) throw new Error("Could not get location");
+
+          const locMsg = {
+            id: (Date.now() + 1).toString(),
+            text: `${getTranslation(currentLanguage, 'locAcquired').replace('{lat}', location.coords.latitude.toFixed(6)).replace('{lon}', location.coords.longitude.toFixed(6))}`,
+            sender: 'me',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+          setMessages(prev => [...prev, locMsg]);
+
+          if (chat.isOfficial) {
+            try {
+              const data = await getNearbyFacilities(location.coords.latitude, location.coords.longitude, 5000);
+              const hospitals = data.facilities && data.facilities.length > 0 ? data.facilities : mockHospitals;
+              setIsTyping(false);
+              const botReply = getTranslation(currentLanguage, 'locReply');
+              const botMsg = { id: (Date.now() + 2).toString(), text: botReply, sender: 'other', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), hospitalCarouselItems: hospitals };
+              setMessages(prev => [...prev, botMsg]);
+            } catch (error) {
+              console.error("API error:", error);
+              setIsTyping(false);
+              const botMsg = { id: (Date.now() + 2).toString(), text: getTranslation(currentLanguage, 'locReply'), sender: 'other', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), hospitalCarouselItems: mockHospitals };
+              setMessages(prev => [...prev, botMsg]);
+            }
+          } else {
+            setIsTyping(false);
+          }
+        } catch (error) {
+          console.error(error);
+          setTimeout(() => {
+            setIsTyping(false);
+            const botMsg = { id: Date.now().toString(), text: "There was an error fetching your location.", sender: 'other', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+            setMessages(prev => [...prev, botMsg]);
+          }, 1000);
+        }
+      })();
+      return;
+    }
+
+    const isLang = Object.keys(translations).some(l => btn.includes(translations[l].lang) || btn.includes('Change Language'));
+    if (isLang) {
+      setLangModalVisible(true);
+      return;
+    }
+
+    // Default: send message normally
+    const newMsg = {
+      id: Date.now().toString(),
+      text: btn,
+      sender: 'me',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, newMsg]);
+    if (chat.isOfficial) {
+      simulateBotResponse(btn);
+    }
+  };
+
+  const handleStateSelect = async (stateName) => {
+    setStateModalVisible(false);
+    setUserState(stateName);
+    await AsyncStorage.setItem('user_state', stateName);
+
+    const userMsg = {
+      id: Date.now().toString(),
+      text: `I am from ${stateName}`,
+      sender: 'me',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setMessages(prev => [...prev, userMsg]);
+    fetchSchemes(stateName);
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.keyboardView}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerLeft}
-          activeOpacity={0.7}
-          onPress={openProfile}
-        >
-          <TouchableOpacity style={styles.backButton} onPress={goBack}>
-            <ArrowLeft size={24} color="#fff" />
-          </TouchableOpacity>
-          {chat.avatar ? (
-            <Image source={chat.avatar} style={styles.avatarImage} />
-          ) : (
-            <View style={[styles.avatarImage, { backgroundColor: '#ccc', justifyContent: 'center', alignItems: 'center' }]}>
-              <Text style={{ fontSize: 18, color: '#fff' }}>{chat.name.charAt(0)}</Text>
-            </View>
-          )}
-          <View style={styles.headerTitleContainer}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={styles.headerName}>{chat.name}</Text>
-              {chat.isOfficial && <BadgeCheck size={16} color="#53BDEB" style={{ marginLeft: 4 }} fill="#fff" />}
-            </View>
-            <Text style={styles.headerStatus}>{chat.status}</Text>
-          </View>
-        </TouchableOpacity>
-        <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.iconButton}>
-            <MoreVertical size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      <ChatHeader chat={chat} goBack={goBack} openProfile={openProfile} />
 
-      {/* Chat Area */}
       <View style={styles.chatAreaWrapper}>
         <View style={styles.chatBackground} />
-
         <ScrollView
           ref={scrollViewRef}
           style={styles.messageArea}
           contentContainerStyle={styles.messageAreaContent}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {messages.map((msg, index) => {
-            const isMe = msg.sender === 'me';
-            return (
-              <View
-                key={msg.id}
-                style={[
-                  styles.msgRow,
-                  isMe ? styles.msgRowRight : styles.msgRowLeft,
-                  (msg.carouselItems || msg.hospitalCarouselItems || msg.schemeCarouselItems) ? { flexDirection: 'column', alignItems: 'flex-start' } : null
-                ]}
-              >
-                <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}>
-                  {msg.type === 'image' && (
-                    <Image source={{ uri: msg.uri }} style={styles.bubbleImage} />
-                  )}
-                  {msg.type === 'document' && (
-                    <View style={styles.documentContainer}>
-                      <View style={styles.documentIconBox}>
-                        <FileText size={20} color="#fff" />
-                      </View>
-                      <Text style={styles.documentName} numberOfLines={1}>{msg.name}</Text>
-                    </View>
-                  )}
-                  {msg.type === 'audio' && <AudioMessage uri={msg.uri} />}
-
-                  {msg.type === 'ticket' && msg.ticketData && (
-                    <View style={styles.ticketContainer}>
-                      <View style={styles.ticketHeader}>
-                        <Text style={styles.ticketTitle}>Appointment Confirmed</Text>
-                        <View style={styles.ticketBadge}>
-                          <Text style={styles.ticketBadgeText}>FREE</Text>
-                        </View>
-                      </View>
-                      <View style={styles.ticketRow}>
-                        <Text style={styles.ticketLabel}>Doctor:</Text>
-                        <Text style={styles.ticketValue}>{msg.ticketData.doctorName}</Text>
-                      </View>
-                      <View style={styles.ticketRow}>
-                        <Text style={styles.ticketLabel}>Specialty:</Text>
-                        <Text style={styles.ticketValue}>{msg.ticketData.specialty}</Text>
-                      </View>
-                      <View style={styles.ticketRow}>
-                        <Text style={styles.ticketLabel}>Date:</Text>
-                        <Text style={styles.ticketValue}>{msg.ticketData.date}</Text>
-                      </View>
-                      <View style={styles.ticketRow}>
-                        <Text style={styles.ticketLabel}>Time:</Text>
-                        <Text style={styles.ticketValue}>{msg.ticketData.time}</Text>
-                      </View>
-                      <View style={styles.ticketRow}>
-                        <Text style={styles.ticketLabel}>ABHA Token:</Text>
-                        <Text style={[styles.ticketValue, { fontWeight: '600', color: '#128C7E' }]}>ABHA-9182-4412-0091</Text>
-                      </View>
-                      <View style={styles.ticketRow}>
-                        <Text style={styles.ticketLabel}>Status:</Text>
-                        <Text style={[styles.ticketValue, { color: '#00A884' }]}>Confirmed (Token Generated)</Text>
-                      </View>
-                    </View>
-                  )}
-
-                  {msg.text ? <Text style={styles.bubbleText}>{msg.text}</Text> : null}
-                  {msg.buttons && (
-                    <View style={styles.actionButtonsContainer}>
-                      {msg.buttons.map((btn, i) => (
-                        <TouchableOpacity
-                          key={i}
-                          style={styles.actionButton}
-                          onPress={() => {
-                            const isKnowSchemes = Object.keys(translations).some(l => btn.includes(translations[l].knowSchemes) || btn.includes('Know Govt Schemes'));
-                            if (isKnowSchemes) {
-                              const tempMsg = {
-                                id: Date.now().toString(),
-                                text: btn,
-                                sender: 'me',
-                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                              };
-                              setMessages(prev => [...prev, tempMsg]);
-                              
-                              // Always ask for state when clicking the button
-                              setTimeout(() => {
-                                const botMsg = {
-                                  id: Date.now().toString(),
-                                  text: getTranslation(currentLanguage, 'selectState'),
-                                  sender: 'other',
-                                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                };
-                                playSound();
-                                setMessages(prev => [...prev, botMsg]);
-                                setStateModalVisible(true);
-                              }, 500);
-                              return;
-                            }
-
-                            const isLocate = Object.keys(translations).some(l => btn.includes(translations[l].locate) || btn.includes('Locate a Healthcare Facility'));
-                            if (isLocate) {
-                              (async () => {
-                                try {
-                                  // Immediate feedback
-                                  const tempMsg = {
-                                    id: Date.now().toString(),
-                                    text: btn,
-                                    sender: 'me',
-                                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                  };
-                                  setMessages(prev => [...prev, tempMsg]);
-                                  setIsTyping(true);
-
-                                  let { status } = await Location.requestForegroundPermissionsAsync();
-                                  if (status !== 'granted') {
-                                    setTimeout(() => {
-                                      setIsTyping(false);
-                                      const botReply = getTranslation(currentLanguage, 'gps_denied') || "I need location access to find nearby healthcare facilities...";
-                                      const botMsg = {
-                                        id: Date.now().toString(),
-                                        text: botReply,
-                                        sender: 'other',
-                                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                      };
-                                      setMessages(prev => [...prev, botMsg]);
-                                    }, 1000);
-                                    return;
-                                  }
-
-                                  let location = await Location.getCurrentPositionAsync({
-                                    accuracy: Location.Accuracy.Balanced,
-                                    timeout: 10000
-                                  });
-
-                                  if (!location) {
-                                    location = await Location.getLastKnownPositionAsync();
-                                  }
-
-                                  if (!location) {
-                                    throw new Error("Could not get location");
-                                  }
-
-                                  const locMsg = {
-                                    id: (Date.now() + 1).toString(),
-                                    text: `${getTranslation(currentLanguage, 'locAcquired').replace('{lat}', location.coords.latitude.toFixed(6)).replace('{lon}', location.coords.longitude.toFixed(6))}`,
-                                    sender: 'me',
-                                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                  };
-                                  setMessages(prev => [...prev, locMsg]);
-
-                                    if (chat.isOfficial) {
-                                      try {
-                                        const data = await getNearbyFacilities(location.coords.latitude, location.coords.longitude, 5000);
-                                      
-                                      console.log("=== API Response (Healthcare Facilities) ===");
-                                      console.log(JSON.stringify(data, null, 2));
-                                      
-                                      // Fallback to mockHospitals if the API returns an empty list
-                                      const hospitals = data.facilities && data.facilities.length > 0
-                                        ? data.facilities
-                                        : mockHospitals;
-
-                                      setIsTyping(false);
-                                      const botReply = getTranslation(currentLanguage, 'locReply');
-                                      const botMsg = {
-                                        id: (Date.now() + 2).toString(),
-                                        text: botReply,
-                                        sender: 'other',
-                                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                        hospitalCarouselItems: hospitals
-                                      };
-                                      setMessages(prev => [...prev, botMsg]);
-                                    } catch (error) {
-                                      console.error("API error:", error);
-                                      // Fallback to mock data on error (e.g. backend not running or reachable)
-                                      setIsTyping(false);
-                                      const botMsg = {
-                                        id: (Date.now() + 2).toString(),
-                                        text: getTranslation(currentLanguage, 'locReply'),
-                                        sender: 'other',
-                                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                                        hospitalCarouselItems: mockHospitals
-                                      };
-                                      setMessages(prev => [...prev, botMsg]);
-                                    }
-                                  } else {
-                                    setIsTyping(false);
-                                  }
-                                } catch (error) {
-                                  console.error(error);
-                                  setTimeout(() => {
-                                    setIsTyping(false);
-                                    const botReply = "There was an error fetching your location. Please make sure your device's GPS is turned on and try again.";
-                                    const botMsg = {
-                                      id: Date.now().toString(),
-                                      text: botReply,
-                                      sender: 'other',
-                                      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                    };
-                                    setMessages(prev => [...prev, botMsg]);
-                                  }, 1000);
-                                }
-                              })();
-                              return;
-                            }
-
-                            const isLang = Object.keys(translations).some(l => btn.includes(translations[l].lang) || btn.includes('Change Language'));
-                            if (isLang) {
-                              setLangModalVisible(true);
-                              return;
-                            }
-
-                            // Automatically send this button text as a message
-                            const newMsg = {
-                              id: Date.now().toString(),
-                              text: btn,
-                              sender: 'me',
-                              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                            };
-                            setMessages(prev => [...prev, newMsg]);
-                            if (chat.isOfficial) {
-                              simulateBotResponse(btn);
-                            }
-                          }}
-                        >
-                          <Text style={styles.actionButtonText}>{btn}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                  <View style={styles.bubbleFooter}>
-                    <Text style={styles.bubbleTime}>{msg.time}</Text>
-                    {isMe && <CheckCheck size={14} color="#53bdeb" style={styles.checkIcon} />}
-                  </View>
-                </View>
-
-                {msg.hospitalCarouselItems && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.carouselContainer}
-                  >
-                    {msg.hospitalCarouselItems.map((hosp, index) => (
-                      <HospitalCard key={hosp.id || `hosp-${index}`} hospital={hosp} />
-                    ))}
-                  </ScrollView>
-                )}
-
-                {msg.carouselItems && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.carouselContainer}
-                  >
-                    {msg.carouselItems.map((doc) => (
-                      <View key={doc.id} style={styles.doctorCard}>
-                        <View style={[styles.doctorImage, { justifyContent: 'center', alignItems: 'center' }]}>
-                          <User size={30} color="#8696a0" />
-                        </View>
-                        <Text style={styles.doctorName}>{doc.name}</Text>
-                        <Text style={styles.doctorSpecialty}>{doc.specialty}</Text>
-                        <Text style={styles.doctorSub}>{doc.experience}</Text>
-                        <Text style={styles.doctorRating}>{doc.rating}</Text>
-                        <Text style={styles.doctorSub}>{doc.fees}</Text>
-                        <TouchableOpacity
-                          style={styles.bookDocButton}
-                          onPress={() => handleBookDoctor(doc)}
-                        >
-                          <Text style={styles.bookDocButtonText}>Book Free Call</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </ScrollView>
-                )}
-
-                {msg.schemeCarouselItems && (
-                  <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.carouselContainer}
-                  >
-                    {msg.schemeCarouselItems.map((scheme, index) => (
-                      <SchemeCard key={scheme.id || `scheme-${index}`} scheme={scheme} />
-                    ))}
-                  </ScrollView>
-                )}
-              </View>
-            );
-          })}
+          {messages.map((msg, index) => (
+            <ChatMessageBubble
+              key={msg.id}
+              msg={msg}
+              isMe={msg.sender === 'me'}
+              onButtonPress={handleQuickReplyButtonPress}
+              onBookDoctor={handleBookDoctor}
+            />
+          ))}
 
           {isTyping && (
             <View style={[styles.msgRow, styles.msgRowLeft]}>
@@ -790,134 +586,34 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
         </ScrollView>
       </View>
 
-      {/* Input Bar */}
-      <View style={styles.inputBar}>
-        {isRecording ? (
-          <RecordingBar
-            onSend={(uri) => {
-              sendMediaMessage({ type: 'audio', uri });
-              setIsRecording(false);
-            }}
-            onCancel={() => setIsRecording(false)}
-          />
-        ) : (
-          <>
-            <View style={styles.inputContainer}>
-              <TouchableOpacity style={styles.inputIconButton}>
-                <Smile size={24} color="#8696a0" />
-              </TouchableOpacity>
+      <ChatInputBar
+        isRecording={isRecording}
+        setIsRecording={setIsRecording}
+        inputText={inputText}
+        setInputText={setInputText}
+        handleSendMessage={handleSendMessage}
+        handleAttachment={handleAttachment}
+        handleCamera={handleCamera}
+        onRecordSend={(uri) => {
+          sendMediaMessage({ type: 'audio', uri });
+          setIsRecording(false);
+        }}
+      />
 
-              <TextInput
-                placeholder="Type a message"
-                placeholderTextColor="#8696a0"
-                style={styles.chatTextInput}
-                value={inputText}
-                onChangeText={setInputText}
-                onSubmitEditing={handleSendMessage}
-              />
-
-              <TouchableOpacity style={styles.inputIconButton} onPress={handleAttachment}>
-                <Paperclip size={24} color="#8696a0" />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.inputIconButton} onPress={handleCamera}>
-                <Camera size={24} color="#8696a0" />
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity style={styles.micButton} onPress={inputText.trim() ? handleSendMessage : () => setIsRecording(true)}>
-              <View style={styles.micCircle}>
-                <Mic size={24} color="#fff" />
-              </View>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
-
-      <Modal
+      <LanguagePickerModal
         visible={langModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setLangModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setLangModalVisible(false)}
-        >
-          <View style={styles.modalContentContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Language / भाषा चुनें</Text>
-              <TouchableOpacity onPress={() => setLangModalVisible(false)}>
-                <X size={24} color="#111B21" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.langList}>
-              {languages.map((lang) => (
-                <TouchableOpacity
-                  key={lang.code}
-                  style={[
-                    styles.langOption,
-                    currentLanguage === lang.code ? styles.langOptionActive : null
-                  ]}
-                  onPress={() => handleSelectLanguage(lang.code)}
-                >
-                  <Text style={styles.langOptionText}>{lang.name}</Text>
-                  <Text style={styles.langOptionNative}>{lang.native}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setLangModalVisible(false)}
+        currentLanguage={currentLanguage}
+        onSelectLanguage={handleSelectLanguage}
+      />
 
-      <Modal
+      <StatePickerModal
         visible={stateModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setStateModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setStateModalVisible(false)}
-        >
-          <View style={styles.modalContentContainer}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Your State</Text>
-              <TouchableOpacity onPress={() => setStateModalVisible(false)}>
-                <X size={24} color="#111B21" />
-              </TouchableOpacity>
-            </View>
-            <ScrollView style={styles.langList}>
-              {(availableStates.length > 0 ? availableStates : ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry']).map((stateName) => (
-                <TouchableOpacity
-                  key={stateName}
-                  style={[
-                    styles.langOption,
-                    userState === stateName ? styles.langOptionActive : null
-                  ]}
-                  onPress={async () => {
-                    setStateModalVisible(false);
-                    setUserState(stateName);
-                    await AsyncStorage.setItem('user_state', stateName);
-                    
-                    const userMsg = {
-                      id: Date.now().toString(),
-                      text: `I am from ${stateName}`,
-                      sender: 'me',
-                      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                    };
-                    setMessages(prev => [...prev, userMsg]);
-                    fetchSchemes(stateName);
-                  }}
-                >
-                  <Text style={styles.langOptionText}>{stateName}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+        onClose={() => setStateModalVisible(false)}
+        availableStates={availableStates}
+        userState={userState}
+        onSelectState={handleStateSelect}
+      />
     </KeyboardAvoidingView>
   );
 }
