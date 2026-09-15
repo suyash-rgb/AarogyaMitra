@@ -1,4 +1,5 @@
-const BACKEND_URL = "http://10.228.232.83:8001/api/v1/logs/";
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.228.232.83:8080/api/v1";
+const BACKEND_URL = `${BASE_URL}/logs/`;
 
 const sendLogToBackend = async (level, args) => {
   try {

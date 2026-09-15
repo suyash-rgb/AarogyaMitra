@@ -32,7 +32,10 @@ import { getSimulatedResponse, mockDoctors, mockHospitals } from '../constants/m
 import { translations, getTranslation } from '../constants/translations';
 import { useAudioPlayer } from 'expo-audio';
 import { HospitalCard } from '../components/HospitalCard';
+import { SchemeCard } from '../components/SchemeCard';
 import { getOrCreateDeviceId } from '../utils/userSession';
+import { searchSchemesRAG, getHealthcareSchemes, getNearbyFacilities, getStates } from '../services/apiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const languages = [
   { code: 'en', name: 'English', native: 'English' },
@@ -84,7 +87,35 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
   const [isRecording, setIsRecording] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState('en');
   const [langModalVisible, setLangModalVisible] = useState(false);
+  const [stateModalVisible, setStateModalVisible] = useState(false);
+  const [userState, setUserState] = useState(null);
+  const [availableStates, setAvailableStates] = useState([]);
   const scrollViewRef = useRef(null);
+
+  useEffect(() => {
+    const loadStateAndData = async () => {
+      // Load persisted state if any
+      try {
+        const savedState = await AsyncStorage.getItem('user_state');
+        if (savedState) setUserState(savedState);
+      } catch (e) {
+        console.error("Failed to load user state", e);
+      }
+
+      // Load all available states from the API
+      try {
+        const statesData = await getStates();
+        if (Array.isArray(statesData)) {
+          setAvailableStates(statesData);
+        } else if (statesData && Array.isArray(statesData.states)) {
+          setAvailableStates(statesData.states);
+        }
+      } catch (e) {
+        console.error("Failed to fetch states meta data", e);
+      }
+    };
+    loadStateAndData();
+  }, []);
 
   useEffect(() => {
     if (chat.id === 'ai-bot' && messages.length === 1) {
@@ -98,6 +129,7 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
             sender: 'other',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             buttons: [
+              getTranslation(currentLanguage, 'knowSchemes'),
               getTranslation(currentLanguage, 'locate'),
               getTranslation(currentLanguage, 'lang'),
               getTranslation(currentLanguage, 'book'),
@@ -227,12 +259,41 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
         userLower.includes('book a consultation')
       );
 
+      const isScheme = userLower.includes('scheme') || userLower.includes('yojana') || userLower.includes('benefits') || userLower.includes('योजना');
       const is104Call = userLower.includes('104') || userLower.includes('helpline') || userLower.includes('call-back');
       const isSanjeevani = userLower.includes('esanjeevani') || userLower.includes('संजीवनी');
       const isAbhaDoc = userLower.includes('abha') || userLower.includes('आभा');
 
       if (chat.isMetaAI) {
         botReply = "That's interesting! I'm an AI, so I don't have personal experiences, but I can help you find more information about that.";
+      } else if (isScheme) {
+        // Send a request to the RAG endpoint
+        (async () => {
+          try {
+            const data = await searchSchemesRAG(userText, userState);
+            
+            const botMsg = {
+              id: Date.now().toString(),
+              text: data.answer,
+              sender: 'other',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              schemeCarouselItems: data.schemes && data.schemes.length > 0 ? data.schemes : null
+            };
+            playSound();
+            setMessages(prev => [...prev, botMsg]);
+          } catch (e) {
+            console.error("RAG Error:", e);
+            const botMsg = {
+              id: Date.now().toString(),
+              text: getTranslation(currentLanguage, 'schemesBusy'),
+              sender: 'other',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            playSound();
+            setMessages(prev => [...prev, botMsg]);
+          }
+        })();
+        return; // Early return to prevent normal sync behavior below
       } else if (is104Call) {
         botReply = getTranslation(currentLanguage, 'call104Reply');
         try {
@@ -278,6 +339,46 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
       playSound();
       setMessages(prev => [...prev, botMsg]);
     }, 1200);
+  };
+
+  const fetchSchemes = async (stateName) => {
+    setIsTyping(true);
+    try {
+      const data = await getHealthcareSchemes(stateName);
+      
+      setIsTyping(false);
+      if (data.items && data.items.length > 0) {
+        const botMsg = {
+          id: Date.now().toString(),
+          text: getTranslation(currentLanguage, 'schemesFound'),
+          sender: 'other',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          schemeCarouselItems: data.items
+        };
+        playSound();
+        setMessages(prev => [...prev, botMsg]);
+      } else {
+        const botMsg = {
+          id: Date.now().toString(),
+          text: `I couldn't find any specific schemes for ${stateName} at the moment.`,
+          sender: 'other',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        };
+        playSound();
+        setMessages(prev => [...prev, botMsg]);
+      }
+    } catch (error) {
+      console.error("Schemes API error:", error);
+      setIsTyping(false);
+      const botMsg = {
+        id: Date.now().toString(),
+        text: getTranslation(currentLanguage, 'schemesBusy'),
+        sender: 'other',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      playSound();
+      setMessages(prev => [...prev, botMsg]);
+    }
   };
 
   const handleBookDoctor = (doc) => {
@@ -334,6 +435,7 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
         sender: 'other',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         buttons: [
+          getTranslation(langCode, 'knowSchemes'),
           getTranslation(langCode, 'locate'),
           getTranslation(langCode, 'lang'),
           getTranslation(langCode, 'book'),
@@ -401,7 +503,7 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
                 style={[
                   styles.msgRow,
                   isMe ? styles.msgRowRight : styles.msgRowLeft,
-                  (msg.carouselItems || msg.hospitalCarouselItems) ? { flexDirection: 'column', alignItems: 'flex-start' } : null
+                  (msg.carouselItems || msg.hospitalCarouselItems || msg.schemeCarouselItems) ? { flexDirection: 'column', alignItems: 'flex-start' } : null
                 ]}
               >
                 <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}>
@@ -461,6 +563,31 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
                           key={i}
                           style={styles.actionButton}
                           onPress={() => {
+                            const isKnowSchemes = Object.keys(translations).some(l => btn.includes(translations[l].knowSchemes) || btn.includes('Know Govt Schemes'));
+                            if (isKnowSchemes) {
+                              const tempMsg = {
+                                id: Date.now().toString(),
+                                text: btn,
+                                sender: 'me',
+                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                              };
+                              setMessages(prev => [...prev, tempMsg]);
+                              
+                              // Always ask for state when clicking the button
+                              setTimeout(() => {
+                                const botMsg = {
+                                  id: Date.now().toString(),
+                                  text: getTranslation(currentLanguage, 'selectState'),
+                                  sender: 'other',
+                                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                };
+                                playSound();
+                                setMessages(prev => [...prev, botMsg]);
+                                setStateModalVisible(true);
+                              }, 500);
+                              return;
+                            }
+
                             const isLocate = Object.keys(translations).some(l => btn.includes(translations[l].locate) || btn.includes('Locate a Healthcare Facility'));
                             if (isLocate) {
                               (async () => {
@@ -514,21 +641,7 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
 
                                     if (chat.isOfficial) {
                                       try {
-                                        const deviceId = await getOrCreateDeviceId();
-                                        // Use the local IP of the machine running the FastAPI backend
-                                        const apiUrl = `http://10.228.232.83:8001/api/v1/healthcare-facilities/nearby?lat=${location.coords.latitude}&lon=${location.coords.longitude}&radius=5000`;
-                                        const response = await fetch(apiUrl, {
-                                          headers: {
-                                            'Accept': 'application/json',
-                                            'X-Device-ID': deviceId
-                                          }
-                                        });
-
-                                      if (!response.ok) {
-                                        throw new Error("Failed to fetch nearby facilities");
-                                      }
-
-                                      const data = await response.json();
+                                        const data = await getNearbyFacilities(location.coords.latitude, location.coords.longitude, 5000);
                                       
                                       console.log("=== API Response (Healthcare Facilities) ===");
                                       console.log(JSON.stringify(data, null, 2));
@@ -650,6 +763,18 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
                     ))}
                   </ScrollView>
                 )}
+
+                {msg.schemeCarouselItems && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.carouselContainer}
+                  >
+                    {msg.schemeCarouselItems.map((scheme, index) => (
+                      <SchemeCard key={scheme.id || `scheme-${index}`} scheme={scheme} />
+                    ))}
+                  </ScrollView>
+                )}
               </View>
             );
           })}
@@ -738,6 +863,55 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
                 >
                   <Text style={styles.langOptionText}>{lang.name}</Text>
                   <Text style={styles.langOptionNative}>{lang.native}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal
+        visible={stateModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setStateModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setStateModalVisible(false)}
+        >
+          <View style={styles.modalContentContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Your State</Text>
+              <TouchableOpacity onPress={() => setStateModalVisible(false)}>
+                <X size={24} color="#111B21" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.langList}>
+              {(availableStates.length > 0 ? availableStates : ['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry']).map((stateName) => (
+                <TouchableOpacity
+                  key={stateName}
+                  style={[
+                    styles.langOption,
+                    userState === stateName ? styles.langOptionActive : null
+                  ]}
+                  onPress={async () => {
+                    setStateModalVisible(false);
+                    setUserState(stateName);
+                    await AsyncStorage.setItem('user_state', stateName);
+                    
+                    const userMsg = {
+                      id: Date.now().toString(),
+                      text: `I am from ${stateName}`,
+                      sender: 'me',
+                      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    };
+                    setMessages(prev => [...prev, userMsg]);
+                    fetchSchemes(stateName);
+                  }}
+                >
+                  <Text style={styles.langOptionText}>{stateName}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>

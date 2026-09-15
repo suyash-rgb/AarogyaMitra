@@ -23,9 +23,6 @@ export default function App() {
       try {
         const persona = await getUserPersona();
         setUserPersona(persona);
-        if (persona.presetChats && persona.presetChats.length > 0) {
-          setChats(persona.presetChats);
-        }
       } catch (err) {
         console.error('Failed to load user persona:', err);
       }

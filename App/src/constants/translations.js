@@ -19,7 +19,11 @@ export const translations = {
     "btnAbhaBooking": "🆔 ABHA Digital Doctor Booking",
     "btn104Callback": "📞 Schedule 104 Call-Back",
     "esanjeevaniReply": "Connecting to eSanjeevani National Tele-OPD Portal...\n\nFree video consultation with MoHFW primary health centre doctors and government specialists (Available 8:00 AM - 8:00 PM).",
-    "call104Reply": "Dialing 104 Toll-Free National Health Helpline...\n\n24/7 free medical advice, doctor consultation, and emergency healthcare assistance."
+    "call104Reply": "Dialing 104 Toll-Free National Health Helpline...\n\n24/7 free medical advice, doctor consultation, and emergency healthcare assistance.",
+    "knowSchemes": "📜 Know Govt Schemes",
+    "selectState": "Please select your State to discover applicable health schemes:",
+    "schemesFound": "Here are some health schemes that might be applicable to you:",
+    "schemesBusy": "Sorry, the scheme discovery engine is currently busy or unavailable. Please try again later."
   },
   "hi": {
     "welcome": "आरोग्य मित्र में आपका स्वागत है! आज मैं आपकी क्या सहायता कर सकता हूँ?",
@@ -41,7 +45,11 @@ export const translations = {
     "btnAbhaBooking": "🆔 आभा (ABHA) डिजिटल अपॉइंटमेंट",
     "btn104Callback": "📞 104 कॉल-बैक अनुरोध करें",
     "esanjeevaniReply": "ई-संजीवनी राष्ट्रीय टेली-ओपीडी पोर्टल से जुड़ रहे हैं...\n\nसरकारी डॉक्टरों के साथ मुफ्त वीडियो परामर्श (समय: सुबह 8:00 से शाम 8:00 बजे)।",
-    "call104Reply": "104 टोल-फ्री राष्ट्रीय स्वास्थ्य हेल्पलाइन डायल की जा रही है...\n\n24 घंटे मुफ्त मेडिकल सलाह और आपातकालीन सहायता।"
+    "call104Reply": "104 टोल-फ्री राष्ट्रीय स्वास्थ्य हेल्पलाइन डायल की जा रही है...\n\n24 घंटे मुफ्त मेडिकल सलाह और आपातकालीन सहायता।",
+    "knowSchemes": "📜 सरकारी योजनाएं जानें",
+    "selectState": "लागू स्वास्थ्य योजनाओं को खोजने के लिए कृपया अपना राज्य चुनें:",
+    "schemesFound": "यहां कुछ स्वास्थ्य योजनाएं दी गई हैं जो आप पर लागू हो सकती हैं:",
+    "schemesBusy": "क्षमा करें, योजना खोज इंजन वर्तमान में व्यस्त है या अनुपलब्ध है। कृपया बाद में पुनः प्रयास करें।"
   },
   "bho": {
     "welcome": "आरोग्य मित्र में राउर स्वागत बा! आज हम राउर कइसे मदद कर सकत बानी?",
