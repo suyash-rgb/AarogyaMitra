@@ -17,6 +17,7 @@ from app.api.v1.endpoints.govt_healthcare_facility import router as govt_healthc
 from app.api.v1.endpoints.emergency_facility import router as emergency_facility_router
 from app.api.v1.endpoints.logs import router as logs_router 
 from app.api.v1.endpoints.healthcare_schemes import router as healthcare_schemes_router
+from app.api.v1.endpoints.user_intent_classifier import router as user_intent_classifier_router
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO)
@@ -53,6 +54,7 @@ app.include_router(govt_healthcare_facility_router, prefix='/api/v1')
 app.include_router(emergency_facility_router, prefix='/api/v1')
 app.include_router(logs_router, prefix='/api/v1')
 app.include_router(healthcare_schemes_router, prefix='/api/v1/schemes', tags=["Healthcare Schemes"])
+app.include_router(user_intent_classifier_router, prefix="/api/v1/router", tags=["User Intent Router"])
 
 # Define session type alias
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
