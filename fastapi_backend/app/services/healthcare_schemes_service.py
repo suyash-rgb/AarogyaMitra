@@ -1,3 +1,4 @@
+from app.db.models.health_scheme import HealthScheme, HealthSchemeFAQ, HealthSchemeReference, HealthSchemeDocument, HealthSchemeEmbedding
 from dotenv import load_dotenv
 load_dotenv()
 import os
@@ -200,6 +201,7 @@ class HealthCareSchemesService:
         all_candidates = set(vector_ranks.keys()) | {item[1].id for item in lexical_scored if item[0] >= 2}
         emb_map = {emb_obj.id: (emb_obj, scheme_name, scheme_state) for emb_obj, scheme_name, scheme_state in rows}
 
+        query_lower = user_query.lower()
         for emb_id in all_candidates:
             v_rank = vector_ranks.get(emb_id, None)
             l_rank = lexical_ranks.get(emb_id, None)
@@ -207,6 +209,17 @@ class HealthCareSchemesService:
             v_rrf = (1.0 / (rrf_k + v_rank)) if v_rank is not None else 0.0
             l_rrf = (1.0 / (rrf_k + l_rank)) if l_rank is not None else 0.0
             rrf_score = v_rrf + l_rrf
+
+            emb_obj, scheme_name, scheme_state = emb_map[emb_id]
+            # Boost exact keyword / acronym matches in scheme_name or chunk_text (e.g. pmjay, ayushman)
+            name_lower = scheme_name.lower()
+            text_lower = emb_obj.chunk_text.lower()
+            
+            for term in query_terms:
+                if term in name_lower or (len(term) >= 4 and term in text_lower):
+                    rrf_score += 0.05
+                if term in ["pmjay", "pm-jay", "ayushman"] and ("pm-jay" in text_lower or "pmjay" in text_lower or "ayushman" in name_lower):
+                    rrf_score += 0.20
 
             v_score = 0.0
             for item in vector_scored:
@@ -296,11 +309,49 @@ INSTRUCTIONS:
                     temperature=0.3,
                     max_tokens=220
                 )
-                llm_answer = response.choices[0].message.content.strip()
+                llm_answer = response.choices[0].message.content.strip() if response.choices[0].message.content else ""
             except Exception as e:
-                llm_answer = f"I found {len(retrieved_chunks)} relevant health schemes for your query. Please tap any scheme card below or ask me about eligibility and application steps!"
-        else:
-            llm_answer = f"I found {len(retrieved_chunks)} relevant health schemes for your query. Please tap any scheme card below or ask me about eligibility and application steps!"
+                llm_answer = ""
+
+        if not llm_answer and top_items:
+            rrf_score, score, emb_obj, scheme_name, scheme_state = top_items[0]
+            scheme_id = emb_obj.scheme_id
+            
+            # Retrieve scheme DB model record for complete field context
+            scheme_res = await db.execute(select(HealthScheme).filter(HealthScheme.id == scheme_id))
+            scheme_obj = scheme_res.scalars().first()
+
+            q_lower = user_query.lower()
+            is_eligibility = any(w in q_lower for w in ["eligib", "eligible", "who can", "criteria", "qualify", "qualification"])
+            is_benefits = any(w in q_lower for w in ["benefit", "cover", "amount", "cashless", "money", "what do i get"])
+            is_apply = any(w in q_lower for w in ["apply", "application", "document", "process", "register", "how to"])
+
+            header = f"**{scheme_name}** ({scheme_state})\n"
+
+            def _clean_section(text: str, label: str) -> str:
+                if not text:
+                    return ""
+                if label in text:
+                    text = text.split(label)[-1]
+                for next_h in ["Description:", "Benefits:", "Eligibility:", "Application Process:", "*Note:"]:
+                    if next_h in text:
+                        text = text.split(next_h)[0]
+                return text.strip()
+
+            if is_eligibility:
+                content = (scheme_obj.eligibility if scheme_obj and scheme_obj.eligibility else _clean_section(emb_obj.chunk_text, "Eligibility:"))
+                llm_answer = f"{header}\n**Eligibility Criteria:**\n{content}"
+            elif is_benefits:
+                content = (scheme_obj.benefits if scheme_obj and scheme_obj.benefits else _clean_section(emb_obj.chunk_text, "Benefits:"))
+                llm_answer = f"{header}\n**Key Benefits:**\n{content}"
+            elif is_apply:
+                content = (scheme_obj.application_process if scheme_obj and scheme_obj.application_process else _clean_section(emb_obj.chunk_text, "Application Process:"))
+                llm_answer = f"{header}\n**Application Process:**\n{content}"
+            else:
+                desc = (scheme_obj.brief_description or scheme_obj.description) if scheme_obj else _clean_section(emb_obj.chunk_text, "Description:")
+                llm_answer = f"{header}\n**Overview:**\n{desc}"
+        elif not llm_answer:
+            llm_answer = "No relevant health scheme details were found for your query criteria."
 
         return RAGSearchResponse(
             query=user_query,

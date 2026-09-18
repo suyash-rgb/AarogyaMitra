@@ -1,33 +1,3 @@
-feat: User Intent Classifier & Router Implementation
+fix: RAG acronym & keyword boost
 
- 1. Problem Addressed
-Previously, freeform user queries in the chatbot had to be sent to Groq (an external LLM API) for routing or handling, causing high latency (~1000ms+) and rapid consumption of strict API rate limits. 
-
- 2. The Solution Implemented
-We built a Zero-LLM Hybrid Intent Router directly into the FastAPI backend. It leverages both deterministic rules and a local SentenceTransformer model (`BAAI/bge-small-en-v1.5`) to understand semantics natively without any external API calls.
-
- 3. Core Components Created
-
-- Schema Layer (`app/schemas/user_intent_classifier.py`)
-  Created Pydantic models to define strict contracts (`IntentRequest`, `UserContext`, `ExtractedSlots`, and `IntentResponse`).
-  Defined four main intents: `GOVT_SCHEMES_DISCOVERY`, `FACILITY_DISCOVERY`, `GENERAL_MEDICAL_QA`, and `GREETING_CONVERSATIONAL`.
-
-- Service Layer (`app/services/user_intent_classifier_service.py`)
-  - Stage 1 (Regex Engine): Implemented instant matching for domain keywords (e.g., scheme, hospital, yojana, PHC). Built entity extractors for 6-digit pincodes, 34 Indian States/UTs, and common medical specialties.
-  - Stage 2 (Local Vector Model): Implemented Zero-Shot Cosine Similarity scoring using `BAAI/bge-small-en-v1.5`. The model pre-loads centroid vectors for prototype sentences on server startup, classifying messy inputs in <45ms.
-
-- API & Dispatch Layer (`app/api/v1/endpoints/user_intent_classifier.py`)
-  - Endpoint: `POST /api/v1/router/classify`
-  - Translation Step: Intercepts non-English queries and converts them using our local `TranslationService` before processing.
-  - Internal Dispatch: After classifying the intent, the router automatically bundles extracted parameters (state, pincode, specialty) and calls the correct backend domain service (`GovtHealthcareFacilityService` or `HealthCareSchemesService`) directly. 
-  - Response: Returns the structured data (facilities or schemes list) to the frontend in a single roundtrip.
-
- 4. Integration & Bug Fixes
-- Registered the new router in `app/main.py`.
-- Fixed import naming issues (`get_db` -> `get_session`, `HealthcareSchemesService` -> `HealthCareSchemesService`).
-- Corrected the keyword argument mismatches in the endpoint when calling the domain services (e.g., using `state_name`, `query_str`, `search`, and `limit`).
-
- 5. Result
-The chatbot can now intelligently route any natural language input to the correct database API with 100% accuracy on benchmarks, taking less than 20ms on average, completely eliminating Groq API rate limit dependency for routing!
-
-refers #10
+The RAG search system in the backend (healthcare_schemes_service.py) now dynamically analyzes the user's specific query focus (e.g. Eligibility, Benefits, Application Process, or Overview) and extracts ONLY the relevant database fields for that specific topic
