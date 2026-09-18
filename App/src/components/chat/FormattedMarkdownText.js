@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 /**
  * WhatsApp / GFM Markdown Renderer for React Native
  * Formats **bold**, *bold*, _italic_, ~strikethrough~, and bullet/numbered lists cleanly.
+ * Uses nested <Text> nodes without flex: 1 to prevent Flexbox bubble collapsing.
  */
 export const FormattedMarkdownText = ({ text, style, selectable = true }) => {
   if (!text) return null;
@@ -16,7 +17,7 @@ export const FormattedMarkdownText = ({ text, style, selectable = true }) => {
     <View style={{ width: '100%' }}>
       {lines.map((line, lineIndex) => {
         const trimmed = line.trim();
-        
+
         // Empty lines create small spacing and reset list counter
         if (!trimmed) {
           listCounter = 0;
@@ -47,22 +48,21 @@ export const FormattedMarkdownText = ({ text, style, selectable = true }) => {
         }
 
         return (
-          <View
+          <Text
             key={lineIndex}
+            selectable={selectable}
             style={[
-              { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start', marginVertical: 1 },
-              (isBullet || isNumbered) ? { paddingLeft: 4 } : null
+              style,
+              { marginBottom: lineIndex === lines.length - 1 ? 0 : 3 }
             ]}
           >
             {prefix ? (
-              <Text selectable={selectable} style={[style, { fontWeight: '700', marginRight: 4 }]}>
+              <Text style={[style, { fontWeight: 'bold' }]}>
                 {prefix}
               </Text>
             ) : null}
-            <Text selectable={selectable} style={[style, { flex: 1 }]}>
-              {parseInlineFormatting(contentText, style)}
-            </Text>
-          </View>
+            {parseInlineFormatting(contentText, style)}
+          </Text>
         );
       })}
     </View>
