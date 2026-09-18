@@ -35,9 +35,9 @@ In **Tier-2, Tier-3, and remote rural villages**, access to quality healthcare i
 * ⏳ **Critical Waiting Delays:** Hours spent travelling over unpaved routes for basic consultation or initial triage.
 * 🗣️ **Language & Literacy Barriers:** Complex health forms and English-centric health apps that alienate rural users.
 
-Meanwhile, mobile connectivity has transformed rural communication. As of **2023**, India boasts:
-* 📱 Over **700 Million** smartphone users nationwide.
-* 🌾 **425 Million+** active internet users in rural areas alone.
+Meanwhile, mobile connectivity has transformed rural communication. As of **2026**, India boasts:
+* 📱 Over **740 Million** smartphone users nationwide(representing the world’s second-largest active base).
+* 🌾 **548 Million+** active internet users in rural areas alone(accounting for over 57% of India's total internet user base).
 
 > 💡 **The Core Opportunity:** What if essential healthcare guidance, first-aid triage, and emergency hospital routing could be delivered directly to rural patients and ASHA workers through intuitive, voice-enabled interfaces on platforms they already rely on?
 
