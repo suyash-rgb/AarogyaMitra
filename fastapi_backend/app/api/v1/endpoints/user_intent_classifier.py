@@ -109,8 +109,8 @@ async def classify_and_route_user_intent(
             )
             response_data = {
                 "message": f"Found nearby healthcare facilities.",
-                "facilities": facility_res.get("items", []),
-                "total": facility_res.get("total", 0)
+                "facilities": getattr(facility_res, "items", []) if not isinstance(facility_res, dict) else facility_res.get("items", []),
+                "total": getattr(facility_res, "total", 0) if not isinstance(facility_res, dict) else facility_res.get("total", 0)
             }
 
         elif intent == IntentEnum.GREETING_CONVERSATIONAL:
