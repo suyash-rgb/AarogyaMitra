@@ -1,0 +1,45 @@
+feat: Indic Voice Processing & Replying Service
+
+built and verified the complete Voice Processing & Replying Service (VoiceService) and its API Endpoints (/api/v1/voice) in the FastAPI backend, utilizing Indic language speech mappings, Speech-to-Text (STT), Text-to-Speech (TTS), and end-to-end voice chat integration with translation and intent routing.
+
+Changes Made
+
+FastAPI Backend (D:\MCA Sage Uni\Semester-3\Project Ideas\ArogyaMitra\fastapi_backend)
+
+1. Schemas (app/schemas/voice.py):
+   - STTResponse: Transcribed text, detected Indic language tag, confidence score, and success status.
+   - TTSRequest: Text input, target Indic language tag (hin_Deva, tam_Taml, tel_Telu, eng_Latn, etc.), and speed toggle.
+   - TTSResponse: Synthesized MP3 audio stream / base64 payload.
+   - VoiceChatResponse: End-to-end response payload containing transcribed user query, intent routing metadata, translated AI response text, and synthesized response MP3 audio payload.
+
+2. Service Layer (app/services/voice_service.py):
+   - INDIC_TO_STT_LANG and INDIC_TO_TTS_LANG mapping dictionaries for 20+ Indic languages/dialects.
+   - speech_to_text() method supporting Google Speech ASR with graceful fallback handling.
+   - text_to_speech() method using gTTS and zero-dependency HTTP fallback engines.
+   - process_voice_chat() end-to-end pipeline: Audio -> STT -> Translation (Indic -> English) -> Intent Routing & RAG Query -> Translation (English -> Indic) -> TTS Audio Generation.
+
+3. API Endpoints (app/api/v1/endpoints/voice.py):
+   - POST /api/v1/voice/stt: Transcribes uploaded voice recording.
+   - POST /api/v1/voice/tts: Synthesizes Indic/English text into spoken MP3 audio base64 payload.
+   - POST /api/v1/voice/process-chat: End-to-end pipeline accepting audio file upload and returning transcribed text + AI response text + synthesized MP3 audio.
+
+4. Router Registration (app/main.py):
+   - Registered voice_router under /api/v1/voice prefix.
+
+---
+
+ Verification Results
+
+All automated verification tests succeeded against the live FastAPI server:
+
+1. /api/v1/voice/tts (Hindi & English):
+   - Status: 200 OK
+   - Output: Valid MP3 Audio Base64 binary payload (98,560 characters for Hindi speech).
+
+2. /api/v1/voice/stt:
+   - Status: 200 OK
+   - Output: {"transcription": "...", "detected_language": "hin_Deva", "success": True}
+
+3. /api/v1/voice/process-chat:
+   - Status: 200 OK
+   - Output: Full voice pipeline output (Transcribed query, Hindi text response: *"आयुषमान भारत योजना प्रति वर्ष प्रति परिवार ₹5 लाख तक का स्वास्थ्य कवरेज प्रदान करती है।"*, and 104,064 byte audio payload).
