@@ -6,6 +6,8 @@ import AudioMessage from '../AudioMessage';
 import { HospitalCard } from '../HospitalCard';
 import { SchemeCard } from '../SchemeCard';
 
+import { FormattedMarkdownText } from './FormattedMarkdownText';
+
 export const ChatMessageBubble = ({ 
   msg, 
   isMe, 
@@ -86,9 +88,7 @@ export const ChatMessageBubble = ({
         )}
 
         {msg.text ? (
-          <Text style={styles.bubbleText} selectable={true}>
-            {msg.text}
-          </Text>
+          <FormattedMarkdownText text={msg.text} style={styles.bubbleText} selectable={true} />
         ) : null}
         
         {msg.buttons && (
