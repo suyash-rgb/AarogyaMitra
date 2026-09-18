@@ -1,3 +1,23 @@
+def renumber_markdown_list(text: str) -> str:
+    if not text:
+        return ""
+    lines = text.split('\n')
+    new_lines = []
+    counter = 0
+    for line in lines:
+        stripped = line.strip()
+        m = re.match(r'^(\d+)[\.\)]\s+(.*)', stripped)
+        if m:
+            counter += 1
+            new_lines.append(f"{counter}. {m.group(2)}")
+        else:
+            if not stripped:
+                counter = 0
+            elif not stripped.startswith('-') and not stripped.startswith('•'):
+                counter = 0
+            new_lines.append(line)
+    return '\n'.join(new_lines)
+
 from app.db.models.health_scheme import HealthScheme, HealthSchemeFAQ, HealthSchemeReference, HealthSchemeDocument, HealthSchemeEmbedding
 from dotenv import load_dotenv
 load_dotenv()
@@ -340,13 +360,13 @@ INSTRUCTIONS:
 
             if is_eligibility:
                 content = (scheme_obj.eligibility if scheme_obj and scheme_obj.eligibility else _clean_section(emb_obj.chunk_text, "Eligibility:"))
-                llm_answer = f"{header}\n**Eligibility Criteria:**\n{content}"
+                llm_answer = f"{header}\n**Eligibility Criteria:**\n{renumber_markdown_list(content)}"
             elif is_benefits:
                 content = (scheme_obj.benefits if scheme_obj and scheme_obj.benefits else _clean_section(emb_obj.chunk_text, "Benefits:"))
-                llm_answer = f"{header}\n**Key Benefits:**\n{content}"
+                llm_answer = f"{header}\n**Key Benefits:**\n{renumber_markdown_list(content)}"
             elif is_apply:
                 content = (scheme_obj.application_process if scheme_obj and scheme_obj.application_process else _clean_section(emb_obj.chunk_text, "Application Process:"))
-                llm_answer = f"{header}\n**Application Process:**\n{content}"
+                llm_answer = f"{header}\n**Application Process:**\n{renumber_markdown_list(content)}"
             else:
                 desc = (scheme_obj.brief_description or scheme_obj.description) if scheme_obj else _clean_section(emb_obj.chunk_text, "Description:")
                 llm_answer = f"{header}\n**Overview:**\n{desc}"

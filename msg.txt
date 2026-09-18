@@ -1,3 +1,0 @@
-fix: RAG acronym & keyword boost
-
-The RAG search system in the backend (healthcare_schemes_service.py) now dynamically analyzes the user's specific query focus (e.g. Eligibility, Benefits, Application Process, or Overview) and extracts ONLY the relevant database fields for that specific topic
