@@ -10,14 +10,16 @@ export const FormattedMarkdownText = ({ text, style, selectable = true }) => {
 
   // Normalize line endings and split into lines
   const lines = text.replace(/\r\n/g, '\n').split('\n');
+  let listCounter = 0;
 
   return (
     <View style={{ width: '100%' }}>
       {lines.map((line, lineIndex) => {
         const trimmed = line.trim();
         
-        // Empty lines create small spacing
+        // Empty lines create small spacing and reset list counter
         if (!trimmed) {
+          listCounter = 0;
           return <View key={lineIndex} style={{ height: 4 }} />;
         }
 
@@ -29,14 +31,19 @@ export const FormattedMarkdownText = ({ text, style, selectable = true }) => {
         let prefix = null;
 
         if (isBullet) {
+          listCounter = 0;
           prefix = '• ';
           contentText = trimmed.substring(2);
         } else if (isNumbered) {
-          const match = trimmed.match(/^(\d+[\.\)])\s*(.*)/);
+          listCounter++;
+          const match = trimmed.match(/^(\d+)([\.\)])\s*(.*)/);
           if (match) {
-            prefix = `${match[1]} `;
-            contentText = match[2];
+            const punct = match[2];
+            prefix = `${listCounter}${punct} `;
+            contentText = match[3];
           }
+        } else {
+          listCounter = 0;
         }
 
         return (

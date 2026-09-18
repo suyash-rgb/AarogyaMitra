@@ -1,3 +1,0 @@
-feat: WhatsApp Markdown Formatting
-
-- Created FormattedMarkdownText.js component to parse and render Markdown syntax (**bold**, *bold*, _italic_, ~strikethrough~) and bulleted/numbered lists inside chat message bubbles natively.
