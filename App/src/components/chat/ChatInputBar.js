@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity } from 'react-native';
-import { Smile, Paperclip, Camera, Mic } from 'lucide-react-native';
+import { Smile, Paperclip, Camera, Mic, Send } from 'lucide-react-native';
 import { styles } from '../../constants/styles';
 import RecordingBar from '../RecordingBar';
 
@@ -47,7 +47,11 @@ export const ChatInputBar = ({
 
           <TouchableOpacity style={styles.micButton} onPress={inputText.trim() ? handleSendMessage : () => setIsRecording(true)}>
             <View style={styles.micCircle}>
-              <Mic size={24} color="#fff" />
+              {inputText.trim() ? (
+                <Send size={24} color="#fff" />
+              ) : (
+                <Mic size={24} color="#fff" />
+              )}
             </View>
           </TouchableOpacity>
         </>
