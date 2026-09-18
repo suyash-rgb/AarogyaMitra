@@ -10,7 +10,8 @@ import {
   Image,
   ActivityIndicator,
   Modal,
-  Linking
+  Linking,
+  Share
 } from 'react-native';
 import {
   MoreVertical,
@@ -28,13 +29,14 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Location from 'expo-location';
+import * as Clipboard from 'expo-clipboard';
 import { getSimulatedResponse, mockDoctors, mockHospitals } from '../constants/mockData';
 import { translations, getTranslation } from '../constants/translations';
 import { useAudioPlayer } from 'expo-audio';
 import { HospitalCard } from '../components/HospitalCard';
 import { SchemeCard } from '../components/SchemeCard';
 import { getOrCreateDeviceId } from '../utils/userSession';
-import { searchSchemesRAG, getHealthcareSchemes, getNearbyFacilities, getStates } from '../services/apiService';
+import { searchSchemesRAG, getHealthcareSchemes, getNearbyFacilities, getStates, classifyIntent } from '../services/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
@@ -44,8 +46,10 @@ import { ChatInputBar } from '../components/chat/ChatInputBar';
 import { ChatMessageBubble } from '../components/chat/ChatMessageBubble';
 import { LanguagePickerModal } from '../components/chat/LanguagePickerModal';
 import { StatePickerModal } from '../components/chat/StatePickerModal';
+import { MessageActionModal } from '../components/chat/MessageActionModal';
+import { ForwardModal } from '../components/chat/ForwardModal';
 
-export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages }) {
+export default function ChatScreen({ chat, allChats = [], goBack, openProfile, onUpdateMessages, onForwardToOtherChat }) {
   const player = useAudioPlayer(require('../../assets/notification.wav'));
 
   const playSound = () => {
@@ -68,7 +72,67 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
   const [stateModalVisible, setStateModalVisible] = useState(false);
   const [userState, setUserState] = useState(null);
   const [availableStates, setAvailableStates] = useState([]);
+  const [actionModalVisible, setActionModalVisible] = useState(false);
+  const [selectedActionMsg, setSelectedActionMsg] = useState(null);
+  const [forwardModalVisible, setForwardModalVisible] = useState(false);
+  const [msgToForward, setMsgToForward] = useState(null);
+  const [toastText, setToastText] = useState('');
   const scrollViewRef = useRef(null);
+
+  const showToast = (text) => {
+    setToastText(text);
+    setTimeout(() => {
+      setToastText('');
+    }, 2500);
+  };
+
+  const handleLongPressMessage = (msg) => {
+    setSelectedActionMsg(msg);
+    setActionModalVisible(true);
+  };
+
+  const handleCopyMessage = async (msg) => {
+    if (msg.text) {
+      await Clipboard.setStringAsync(msg.text);
+      showToast('Copied to clipboard');
+    }
+  };
+
+  const handleShareMessage = async (msg) => {
+    if (msg.text) {
+      try {
+        await Share.share({ message: msg.text });
+      } catch (err) {
+        console.error("Share error:", err);
+      }
+    }
+  };
+
+  const handleOpenForwardModal = (msg) => {
+    setMsgToForward(msg);
+    setForwardModalVisible(true);
+  };
+
+  const handleForwardToChat = (targetChat) => {
+    setForwardModalVisible(false);
+    if (!msgToForward) return;
+
+    if (targetChat.id === chat.id) {
+      const fwdMsg = {
+        id: Date.now().toString(),
+        text: msgToForward.text,
+        sender: 'me',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        isForwarded: true
+      };
+      setMessages(prev => [...prev, fwdMsg]);
+      showToast(`Forwarded to ${targetChat.name}`);
+    } else if (onForwardToOtherChat) {
+      onForwardToOtherChat(targetChat.id, msgToForward);
+      showToast(`Forwarded to ${targetChat.name}`);
+    }
+    setMsgToForward(null);
+  };
 
   useEffect(() => {
     const loadStateAndData = async () => {
@@ -157,9 +221,10 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
   const handleSendMessage = () => {
     if (inputText.trim() === '') return;
 
+    const userText = inputText.trim();
     const newMsg = {
       id: Date.now().toString(),
-      text: inputText,
+      text: userText,
       sender: 'me',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -168,7 +233,7 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
     setInputText('');
 
     if (chat.isOfficial) {
-      simulateBotResponse(inputText);
+      simulateBotResponse(userText);
     }
   };
 
@@ -217,93 +282,128 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
     setMessages(prev => [...prev, newMsg]);
   };
 
-  const simulateBotResponse = (userText) => {
+  const simulateBotResponse = async (userText) => {
     setIsTyping(true);
-    setTimeout(() => {
+
+    const userLower = userText.toLowerCase();
+
+    // 1. Direct Hotline / Dialer Triggers
+    const is104Call = userLower.includes('104') || userLower.includes('helpline') || userLower.includes('call-back');
+    const isSanjeevani = userLower.includes('esanjeevani') || userLower.includes('संजीवनी');
+    const isAbhaDoc = userLower.includes('abha') || userLower.includes('आभा');
+
+    if (is104Call) {
       setIsTyping(false);
+      const botReply = getTranslation(currentLanguage, 'call104Reply');
+      try {
+        Linking.openURL('tel:104');
+      } catch (e) {
+        console.error("Dialer error:", e);
+      }
+      const botMsg = {
+        id: Date.now().toString(),
+        text: botReply,
+        sender: 'other',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      playSound();
+      setMessages(prev => [...prev, botMsg]);
+      return;
+    }
+
+    if (isSanjeevani) {
+      setIsTyping(false);
+      const botReply = getTranslation(currentLanguage, 'esanjeevaniReply');
+      try {
+        Linking.openURL('https://esanjeevaniopd.in');
+      } catch (e) {
+        console.error("Linking error:", e);
+      }
+      const botMsg = {
+        id: Date.now().toString(),
+        text: botReply,
+        sender: 'other',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      playSound();
+      setMessages(prev => [...prev, botMsg]);
+      return;
+    }
+
+    if (isAbhaDoc) {
+      setIsTyping(false);
+      const botReply = getTranslation(currentLanguage, 'selectDoc');
+      const botMsg = {
+        id: Date.now().toString(),
+        text: botReply,
+        sender: 'other',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        carouselItems: mockDoctors
+      };
+      playSound();
+      setMessages(prev => [...prev, botMsg]);
+      return;
+    }
+
+    // 2. Intent Classification and Automated Zero-LLM Search via Backend Router Endpoint
+    try {
+      const userContext = {
+        language: currentLanguage || 'en',
+        state: userState || null
+      };
+
+      const intentRes = await classifyIntent(userText, userContext);
+      setIsTyping(false);
+
+      const { intent, response_data } = intentRes;
+
       let botReply = '';
-      let carouselItems = null;
+      let schemeCarouselItems = null;
+      let hospitalCarouselItems = null;
       let buttons = null;
 
-      const userLower = userText.toLowerCase();
-
-      const isDoctor = Object.keys(translations).some(l =>
-        (translations[l].doctor && userLower.includes(translations[l].doctor.toLowerCase())) ||
-        userLower.includes('talk to a doctor')
-      );
-
-      const isBook = Object.keys(translations).some(l =>
-        (translations[l].book && userLower.includes(translations[l].book.toLowerCase())) ||
-        userLower.includes('book a consultation')
-      );
-
-      const isScheme = userLower.includes('scheme') || userLower.includes('yojana') || userLower.includes('benefits') || userLower.includes('योजना');
-      const is104Call = userLower.includes('104') || userLower.includes('helpline') || userLower.includes('call-back');
-      const isSanjeevani = userLower.includes('esanjeevani') || userLower.includes('संजीवनी');
-      const isAbhaDoc = userLower.includes('abha') || userLower.includes('आभा');
-
-      if (chat.isMetaAI) {
-        botReply = "That's interesting! I'm an AI, so I don't have personal experiences, but I can help you find more information about that.";
-      } else if (isScheme) {
-        // Send a request to the RAG endpoint
-        (async () => {
+      if (intent === 'GOVT_SCHEMES_DISCOVERY') {
+        const schemes = response_data?.schemes || [];
+        if (schemes.length > 0) {
+          botReply = response_data.message || getTranslation(currentLanguage, 'schemesFound');
+          schemeCarouselItems = schemes;
+        } else {
+          // Perform RAG scheme search for direct question answering
           try {
-            const data = await searchSchemesRAG(userText, userState);
-
-            const botMsg = {
-              id: Date.now().toString(),
-              text: data.answer,
-              sender: 'other',
-              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              schemeCarouselItems: data.schemes && data.schemes.length > 0 ? data.schemes : null
-            };
-            playSound();
-            setMessages(prev => [...prev, botMsg]);
-          } catch (e) {
-            console.error("RAG Error:", e);
-            const botMsg = {
-              id: Date.now().toString(),
-              text: getTranslation(currentLanguage, 'schemesBusy'),
-              sender: 'other',
-              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            playSound();
-            setMessages(prev => [...prev, botMsg]);
+            const ragData = await searchSchemesRAG(userText, userState);
+            botReply = (ragData?.answer && ragData.answer.trim()) 
+              ? ragData.answer 
+              : getTranslation(currentLanguage, 'schemesFound');
+            // Direct text Q&A: Do not display cards or carousels
+            schemeCarouselItems = null;
+          } catch (ragErr) {
+            console.error("RAG Error:", ragErr);
+            botReply = getTranslation(currentLanguage, 'schemesBusy');
           }
-        })();
-        return; // Early return to prevent normal sync behavior below
-      } else if (is104Call) {
-        botReply = getTranslation(currentLanguage, 'call104Reply');
-        try {
-          Linking.openURL('tel:104');
-        } catch (e) {
-          console.error("Dialer error:", e);
         }
-      } else if (isSanjeevani) {
-        botReply = getTranslation(currentLanguage, 'esanjeevaniReply');
-        try {
-          Linking.openURL('https://esanjeevaniopd.in');
-        } catch (e) {
-          console.error("Linking error:", e);
+      } else if (intent === 'FACILITY_DISCOVERY') {
+        const facilities = response_data?.facilities || [];
+        if (facilities.length > 0) {
+          botReply = (response_data?.message && response_data.message.trim()) || getTranslation(currentLanguage, 'locReply');
+          hospitalCarouselItems = facilities;
+        } else {
+          botReply = (response_data?.message && response_data.message.trim()) || getTranslation(currentLanguage, 'locReply');
+          hospitalCarouselItems = mockHospitals;
         }
-      } else if (isAbhaDoc) {
-        botReply = getTranslation(currentLanguage, 'selectDoc');
-        carouselItems = mockDoctors;
-      } else if (isDoctor) {
-        botReply = getTranslation(currentLanguage, 'talkOptionsPrompt');
+      } else if (intent === 'GREETING_CONVERSATIONAL') {
+        botReply = (response_data?.message && response_data.message.trim()) || getTranslation(currentLanguage, 'welcome');
         buttons = [
-          getTranslation(currentLanguage, 'btnCall104'),
-          getTranslation(currentLanguage, 'btnSanjeevani')
+          getTranslation(currentLanguage, 'knowSchemes'),
+          getTranslation(currentLanguage, 'locate'),
+          getTranslation(currentLanguage, 'lang'),
+          getTranslation(currentLanguage, 'book'),
+          getTranslation(currentLanguage, 'doctor'),
+          getTranslation(currentLanguage, 'help')
         ];
-      } else if (isBook) {
-        botReply = getTranslation(currentLanguage, 'bookOptionsPrompt');
-        buttons = [
-          getTranslation(currentLanguage, 'btnAbhaBooking'),
-          getTranslation(currentLanguage, 'btnSanjeevani'),
-          getTranslation(currentLanguage, 'btn104Callback')
-        ];
-      } else {
+      } else if (intent === 'GENERAL_MEDICAL_QA') {
         botReply = getSimulatedResponse(userText, chat.name);
+      } else {
+        botReply = (response_data?.message && response_data.message.trim()) || getSimulatedResponse(userText, chat.name);
       }
 
       const botMsg = {
@@ -311,13 +411,30 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
         text: botReply,
         sender: 'other',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        carouselItems: carouselItems,
-        buttons: buttons
+        schemeCarouselItems,
+        hospitalCarouselItems,
+        buttons
       };
       playSound();
       setMessages(prev => [...prev, botMsg]);
-    }, 1200);
+
+    } catch (error) {
+      console.error("Intent Router Classification Error:", error);
+      setIsTyping(false);
+
+      // Graceful fallback to simulated response on network failure
+      const botReply = getSimulatedResponse(userText, chat.name);
+      const botMsg = {
+        id: (Date.now() + 1).toString(),
+        text: botReply,
+        sender: 'other',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      playSound();
+      setMessages(prev => [...prev, botMsg]);
+    }
   };
+
 
   const fetchSchemes = async (stateName) => {
     setIsTyping(true);
@@ -572,6 +689,7 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
               isMe={msg.sender === 'me'}
               onButtonPress={handleQuickReplyButtonPress}
               onBookDoctor={handleBookDoctor}
+              onLongPressMessage={handleLongPressMessage}
             />
           ))}
 
@@ -614,6 +732,42 @@ export default function ChatScreen({ chat, goBack, openProfile, onUpdateMessages
         userState={userState}
         onSelectState={handleStateSelect}
       />
+
+      <MessageActionModal
+        visible={actionModalVisible}
+        onClose={() => setActionModalVisible(false)}
+        selectedMessage={selectedActionMsg}
+        onCopy={handleCopyMessage}
+        onForward={handleOpenForwardModal}
+        onShare={handleShareMessage}
+      />
+
+      <ForwardModal
+        visible={forwardModalVisible}
+        onClose={() => setForwardModalVisible(false)}
+        chats={allChats}
+        onForward={handleForwardToChat}
+      />
+
+      {toastText ? (
+        <View style={{
+          position: 'absolute',
+          bottom: 90,
+          alignSelf: 'center',
+          backgroundColor: '#202C33',
+          paddingHorizontal: 16,
+          paddingVertical: 10,
+          borderRadius: 20,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.3,
+          shadowRadius: 4,
+          elevation: 5,
+          zIndex: 999
+        }}>
+          <Text style={{ color: '#E9EDEF', fontSize: 13, fontWeight: '600' }}>{toastText}</Text>
+        </View>
+      ) : null}
     </KeyboardAvoidingView>
   );
 }

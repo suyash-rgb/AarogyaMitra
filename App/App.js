@@ -40,6 +40,25 @@ export default function App() {
     setChats(prevChats => prevChats.map(c => c.id === chatId ? { ...c, messages: updatedMessages } : c));
   };
 
+  const handleForwardToOtherChat = (targetChatId, message) => {
+    const fwdMsg = {
+      id: Date.now().toString(),
+      text: message.text,
+      sender: 'me',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isForwarded: true
+    };
+    setChats(prevChats => prevChats.map(c => {
+      if (c.id === targetChatId) {
+        return {
+          ...c,
+          messages: [...c.messages, fwdMsg]
+        };
+      }
+      return c;
+    }));
+  };
+
   const renderScreen = () => {
     if (currentScreen === 'chatList') {
       return (
@@ -56,9 +75,11 @@ export default function App() {
         <ChatScreen 
           key={activeChat.id} // forces remount for fresh chat state
           chat={currentChat} 
+          allChats={chats}
           goBack={() => setCurrentScreen('chatList')}
           openProfile={() => setCurrentScreen('profile')}
           onUpdateMessages={(updatedMessages) => updateChatMessages(activeChat.id, updatedMessages)}
+          onForwardToOtherChat={handleForwardToOtherChat}
         />
       );
     }

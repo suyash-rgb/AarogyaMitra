@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { CheckCheck, FileText, User } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, Pressable } from 'react-native';
+import { CheckCheck, FileText, User, CornerUpRight } from 'lucide-react-native';
 import { styles } from '../../constants/styles';
 import AudioMessage from '../AudioMessage';
 import { HospitalCard } from '../HospitalCard';
@@ -10,7 +10,8 @@ export const ChatMessageBubble = ({
   msg, 
   isMe, 
   onButtonPress, 
-  onBookDoctor 
+  onBookDoctor,
+  onLongPressMessage
 }) => {
   return (
     <View
@@ -20,7 +21,22 @@ export const ChatMessageBubble = ({
         (msg.carouselItems || msg.hospitalCarouselItems || msg.schemeCarouselItems) ? { flexDirection: 'column', alignItems: 'flex-start' } : null
       ]}
     >
-      <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}>
+      <Pressable
+        onLongPress={() => onLongPressMessage && onLongPressMessage(msg)}
+        delayLongPress={250}
+        style={({ pressed }) => [
+          styles.bubble,
+          isMe ? styles.bubbleMe : styles.bubbleOther,
+          pressed ? { opacity: 0.85 } : null
+        ]}
+      >
+        {msg.isForwarded && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+            <CornerUpRight size={12} color="#667781" style={{ marginRight: 4 }} />
+            <Text style={{ fontSize: 11, color: '#667781', fontStyle: 'italic', fontWeight: '500' }}>Forwarded</Text>
+          </View>
+        )}
+
         {msg.type === 'image' && (
           <Image source={{ uri: msg.uri }} style={styles.bubbleImage} />
         )}
@@ -69,7 +85,11 @@ export const ChatMessageBubble = ({
           </View>
         )}
 
-        {msg.text ? <Text style={styles.bubbleText}>{msg.text}</Text> : null}
+        {msg.text ? (
+          <Text style={styles.bubbleText} selectable={true}>
+            {msg.text}
+          </Text>
+        ) : null}
         
         {msg.buttons && (
           <View style={styles.actionButtonsContainer}>
@@ -89,7 +109,7 @@ export const ChatMessageBubble = ({
           <Text style={styles.bubbleTime}>{msg.time}</Text>
           {isMe && <CheckCheck size={14} color="#53bdeb" style={styles.checkIcon} />}
         </View>
-      </View>
+      </Pressable>
 
       {/* Carousels attached to the message */}
       {msg.hospitalCarouselItems && (
@@ -145,3 +165,4 @@ export const ChatMessageBubble = ({
     </View>
   );
 };
+

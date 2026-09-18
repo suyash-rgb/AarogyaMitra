@@ -32,3 +32,20 @@ export const getSchemeDetails = async (idOrSlug) => {
 export const getNearbyFacilities = async (lat, lon, radius = 5000) => {
   return await fetchWithDeviceContext(`/healthcare-facilities/nearby?lat=${lat}&lon=${lon}&radius=${radius}`);
 };
+
+/**
+ * User Intent Router Service
+ */
+export const classifyIntent = async (query, userContext = {}) => {
+  return await fetchWithDeviceContext('/router/classify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      user_context: userContext,
+    }),
+  });
+};
+

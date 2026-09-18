@@ -1,0 +1,37 @@
+feat: Intent Classifier & Router Integration, Message Copy & Forwarding implemented 
+
+The backend User Intent Classifier & Router endpoint (POST /api/v1/router/classify) is now fully integrated into the React Native mobile app (ChatScreen.js).
+
+1. Added API Service Helper
+File: apiService.js
+Function: Added classifyIntent(query, userContext) to send freeform user text along with user context (language, state) directly to /api/v1/router/classify.
+
+2. Connected Chat Message Flow to Intent Classifier
+File: ChatScreen.js
+Workflow:
+When a user types a message and clicks send, handleSendMessage passes the query to simulateBotResponse.
+simulateBotResponse checks for instant hotline triggers (e.g. 104 helpline dialer, eSanjeevani web portal, or ABHA doctor directory).
+All other freeform text messages are sent directly to the backend Intent Router Endpoint (/api/v1/router/classify).
+Dynamic rendering based on classified intent:
+GOVT_SCHEMES_DISCOVERY: Displays matching government health scheme cards (schemeCarouselItems) directly from database results (or falls back to RAG if empty).
+FACILITY_DISCOVERY: Displays matching healthcare facility/emergency cards (hospitalCarouselItems).
+GREETING_CONVERSATIONAL: Displays friendly greeting text accompanied by action quick-reply buttons.
+GENERAL_MEDICAL_QA: Displays AI medical guidance.
+
+Message Copy & Forwarding Implemented
+Message copying, forwarding, and native text selection have been implemented in the chat interface:
+
+1. Native Text Selection & Copying
+Native Selection: Enabled selectable={true} on all message text blocks in 
+
+ChatMessageBubble.js
+, allowing native highlight and drag selection.
+Clipboard Copy: Long-pressing any message opens the Action Menu and allows tapping Copy Text, which copies the message text using expo-clipboard and shows a "Copied to clipboard" toast notification.
+2. WhatsApp-Style Long-Press Menu (MessageActionModal.js)
+Long-pressing any message bubble opens a WhatsApp-style bottom modal with options:
+📋 Copy Text
+↪️ Forward Message
+📤 Share Message (opens system native share sheet to send to external apps)
+3. Message Forwarding (ForwardModal.js)
+Tapping Forward Message opens a contact/chat selector list showing all available chats (Aarogya Mitra, Meta AI, Leo, Papa, etc.).
+Messages forwarded within the current chat or to other chats display a Forwarded badge with an arrow icon at the top of the bubble.
