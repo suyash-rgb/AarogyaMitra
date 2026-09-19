@@ -6,7 +6,7 @@ Understanding this hierarchy is critical for filtering nearby public facilities,
 
 ---
 
-## 🏗️ Public Healthcare Hierarchy Diagram
+## 🏗️ Public Healthcare Hierarchy Overview
 
 ```mermaid
 flowchart TD
@@ -14,7 +14,6 @@ flowchart TD
     classDef t3Style fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#991b1b,font-weight:bold;
     classDef t2Style fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#92400e,font-weight:bold;
     classDef t1Style fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#166534,font-weight:bold;
-    classDef subNode fill:#ffffff,stroke:#64748b,stroke-width:1px,color:#1e293b;
 
     %% Main Tier Nodes
     T3["🏛️ TIER 3: TERTIARY CARE<br/>Apex Institutes & Medical Colleges"]:::t3Style
@@ -23,35 +22,62 @@ flowchart TD
 
     %% Referral Escalation & Step-Down Flows
     T1 -->|"⬆️ Referral (Surgeries, Inpatient, Fractures)"| T2
-    T2 -->|"⬆️ Referral (Super-Specialties, Oncology, Neuro)"| T3
-    T3 -.->"⬇️ Step-Down Care & Chronic Follow-Up"-.-> T2
-    T2 -.->"⬇️ Community Rehabilitation & Preventive Care"-.-> T1
+    T2 -->|"⬆️ Referral (Super-Specialties, Oncology)"| T3
+    
+    T3 -->|"⬇️ Step-Down Care & Follow-Up"| T2
+    T2 -->|"⬇️ Community Rehab & Preventive Care"| T1
+```
 
-    %% Tier 3 Subgraph
-    subgraph Tier3Group ["Tier 3 Facilities (Apex & Tertiary)"]
-        T3_1["Medical College Hospitals"]:::subNode
-        T3_2["AIIMS / National Apex Institutes"]:::subNode
-        T3_3["Super-Specialty Hospitals (>500 Beds)"]:::subNode
-    end
-    T3 --- Tier3Group
+### Tier 3: Tertiary Care Breakdown
+```mermaid
+flowchart TD
+    classDef t3Style fill:#fee2e2,stroke:#ef4444,stroke-width:2px,color:#991b1b,font-weight:bold;
+    classDef subNode fill:#ffffff,stroke:#64748b,stroke-width:1px,color:#1e293b;
 
-    %% Tier 2 Subgraph
-    subgraph Tier2Group ["Tier 2 Facilities (First Referral Units - FRUs)"]
-        T2_1["District Hospitals (100 - 500 Beds)"]:::subNode
-        T2_2["Sub-District / Taluka Hospitals"]:::subNode
-        T2_3["Community Health Centres (30 Beds / 4 Specialists)"]:::subNode
-        T2_4["Civil & Women / Maternity Hospitals"]:::subNode
-    end
-    T2 --- Tier2Group
+    T3["🏛️ TIER 3: TERTIARY CARE"]:::t3Style
+    T3_1["Medical College Hospitals"]:::subNode
+    T3_2["AIIMS / National Apex Institutes"]:::subNode
+    T3_3["Super-Specialty Hospitals (>500 Beds)"]:::subNode
 
-    %% Tier 1 Subgraph
-    subgraph Tier1Group ["Tier 1 Facilities (Primary & Peripheral Care)"]
-        T1_1["Primary Health Centres (20,000 - 30,000 Pop)"]:::subNode
-        T1_2["Ayushman Bharat Health & Wellness Centres (HWCs)"]:::subNode
-        T1_3["Sub-Centres / Health Sub-Centres (3,000 - 5,000 Pop)"]:::subNode
-        T1_4["Urban Health Posts & Ayush Dispensaries"]:::subNode
-    end
-    T1 --- Tier1Group
+    T3 --> T3_1
+    T3 --> T3_2
+    T3 --> T3_3
+```
+
+### Tier 2: Secondary Care Breakdown
+```mermaid
+flowchart TD
+    classDef t2Style fill:#fef3c7,stroke:#f59e0b,stroke-width:2px,color:#92400e,font-weight:bold;
+    classDef subNode fill:#ffffff,stroke:#64748b,stroke-width:1px,color:#1e293b;
+
+    T2["🏥 TIER 2: SECONDARY CARE"]:::t2Style
+    T2_1["District Hospitals (100 - 500 Beds)"]:::subNode
+    T2_2["Sub-District / Taluka Hospitals"]:::subNode
+    T2_3["Community Health Centres (30 Beds / 4 Specialists)"]:::subNode
+    T2_4["Civil & Women / Maternity Hospitals"]:::subNode
+
+    T2 --> T2_1
+    T2 --> T2_2
+    T2 --> T2_3
+    T2 --> T2_4
+```
+
+### Tier 1: Primary Care Breakdown
+```mermaid
+flowchart TD
+    classDef t1Style fill:#dcfce7,stroke:#22c55e,stroke-width:2px,color:#166534,font-weight:bold;
+    classDef subNode fill:#ffffff,stroke:#64748b,stroke-width:1px,color:#1e293b;
+
+    T1["🩺 TIER 1: PRIMARY CARE"]:::t1Style
+    T1_1["Primary Health Centres (20,000 - 30,000 Pop)"]:::subNode
+    T1_2["Ayushman Bharat Health & Wellness Centres (HWCs)"]:::subNode
+    T1_3["Sub-Centres / Health Sub-Centres (3,000 - 5,000 Pop)"]:::subNode
+    T1_4["Urban Health Posts & Ayush Dispensaries"]:::subNode
+
+    T1 --> T1_1
+    T1 --> T1_2
+    T1 --> T1_3
+    T1 --> T1_4
 ```
 
 ---
