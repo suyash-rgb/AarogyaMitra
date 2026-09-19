@@ -1,10 +1,10 @@
-Add FirstAidQA emergency dataset preprocessing script and ChatML dataset export
+Add ChatDoctor primary care dataset preprocessing script and ChatML dataset export
 
-- Created `preprocess_firstaid_dataset.py` in `fastapi_backend/scripts/data_preprocessing/` to filter, clean, and reformat `firstaidqa_v1.json`.
-- Filtered exclusively for high-acuity physical emergencies across 7 categories: cardiac arrest, airway obstruction/choking, arterial bleeding, electrical shock, chemical/thermal burns, fractures, and venomous bites.
-- Excluded minor dermatological and non-urgent queries.
-- Stripped all conversational fillers ("Hello", "Thank you for your question", "I am sorry to hear that").
-- Reformatted all assistant responses strictly into 4 to 5 numbered steps starting with active imperative verbs ("Apply", "Elevate", "Do not", "Position", "Flush", "Immobilize", etc.).
-- Appended mandatory standard emergency dispatch trigger: "Call 108/112 immediately if patient is unresponsive."
-- Generated and exported exactly 1,000 ChatML pairs to `datasets/fine-tuning/firstaidqa-clean.json`.
-- Updated `dataset_preprocessing_report.md` with complete documentation, sampling breakdown, and preprocessing logic.
+- Created `preprocess_chatdoctor_dataset.py` in `fastapi_backend/scripts/data_preprocessing/` to filter, clean, and reformat `archive-ChatDoctor` (`HealthCareMagic-100k.json` and `iCliniq.json`).
+- Filtered exclusively for 5 common primary care complaints: fatigue, mild fever, back pain, headache, and acid reflux.
+- Excluded cases involving oncology, psychiatric crises, or complex inpatient procedures.
+- Stripped external doctor signatures, physician names, hospital advertising, phone numbers, website links, and legal disclaimers.
+- Restructured doctor responses to consistently ask 1 or 2 targeted diagnostic follow-up questions at the top before offering general self-care advice.
+- Truncated verbose clinical essays to concise responses strictly under 130 words.
+- Exported exactly 750 ChatML pairs to `datasets/fine-tuning/chatdoctor-clean.json` (150 pairs per complaint category).
+- Updated `dataset_preprocessing_report.md` with full documentation and sampling breakdown.
