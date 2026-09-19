@@ -1,5 +1,0 @@
-Update healthcare_facility_hierarchy.md with enhanced Mermaid diagram and formatted tier matrix
-
-- Redesigned the 3-tier Indian Public Healthcare Hierarchy flowchart using color-coded Mermaid styling, referral escalation paths, step-down care flows, and bed/population capacity badges.
-- Added a structured comparison table outlining Tier levels, database parameters (`tier_level`), bed capacity, staffing, and ArogyaMitra AI routing logic.
-- Restructured markdown formatting with GitHub-style callouts (`TIP`, `IMPORTANT`, `CAUTION`) and API query parameters.
