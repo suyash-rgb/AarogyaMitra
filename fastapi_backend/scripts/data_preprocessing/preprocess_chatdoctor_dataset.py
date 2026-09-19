@@ -1,6 +1,6 @@
 """
-ArogyaMitra Data Preprocessing Script: ChatDoctor Dataset
----------------------------------------------------------
+ArogyaMitra Data Preprocessing Script: ChatDoctor Dataset (V3 - Varied Intros & Hyphenated Exclusions)
+-------------------------------------------------------------------------------------------------------
 Dataset Source: archive-ChatDoctor (HealthCareMagic-100k.json, iCliniq.json)
 Target Output: 750 ChatML pairs stored in datasets/fine-tuning/chatdoctor-clean.json
 
@@ -10,7 +10,7 @@ Sampling Criteria:
 
 Cleaning & Preprocessing:
 - Strip external doctor signatures, physician names, hospital advertising, phone numbers, disclaimers.
-- Restructure doctor turns to consistently ask 1 or 2 targeted diagnostic follow-up questions before offering general advice.
+- Restructure doctor turns to naturally ask 1 or 2 targeted diagnostic follow-up questions using dynamic, varied conversational phrasing (avoiding repetitive static prefix strings).
 - Truncate verbose clinical essays to concise responses strictly under 130 words.
 """
 
@@ -44,34 +44,54 @@ EXCLUSIONS = [
     # Oncology
     r"\bcancer\b", r"\btumor\b", r"\btumour\b", r"\bchemo\w*", r"\bmalignan\w*", r"\bradiation\b", r"\bmetasta\w*", r"\blymphoma\b", r"\bleukemia\b", r"\bcarcinoma\b", r"\bsarcoma\b", r"\bbiopsy\b",
     # Psychiatric Crisis
-    r"\bsuicid\w*", r"\bself harm\b", r"\bpsychosis\b", r"\bhallucinat\w*", r"\bschizophrenia\b", r"\bpsychiatric crisis\b", r"\bmania\b", r"\bbipolar\b",
+    r"\bsuicid\w*", r"\bself harm\b", r"\bself-harm\b", r"\bpsychosis\b", r"\bhallucinat\w*", r"\bschizophrenia\b", r"\bpsychiatric crisis\b", r"\bmania\b", r"\bbipolar\b",
     # Complex Inpatient Procedures
-    r"\bsurger\w*", r"\bsurgical\b", r"\bicu\b", r"\bintubat\w*", r"\bventilat\w*", r"\bbypass\b", r"\bdialysis\b", r"\btransplant\b", r"\bcatheter\b", r"\bpost op\w*"
+    r"\bsurger\w*", r"\bsurgical\b", r"\bicu\b", r"\bintubat\w*", r"\bventilat\w*", r"\bbypass\b", r"\bby-pass\b", r"\bby pass\b", r"\bdialysis\b", r"\btransplant\b", r"\bcatheter\b", r"\bpost op\w*", r"\bpost-op\w*", r"\bpostoperative\b"
 ]
 
-# Targeted Diagnostic Follow-Up Questions per Category
-DIAGNOSTIC_QUESTIONS = {
+# Diverse, Natural Diagnostic Follow-Up Questions per Category
+DIAGNOSTIC_VARIATIONS = {
     "fatigue": [
-        "How long have you been experiencing this fatigue, and do you have accompanying symptoms like fever or unexplained weight loss?",
-        "Do you have a history of anemia or thyroid imbalance, and how is your daily sleep quality?"
+        "How long have you been experiencing this fatigue, and do you have any accompanying symptoms like fever or unexplained weight loss?",
+        "Do you have a history of anemia or thyroid imbalance, and how is your daily sleep quality?",
+        "How many weeks has this tiredness lasted, and does it improve with rest?",
+        "Could you tell me if this low energy came on suddenly or developed gradually over time?"
     ],
     "mild_fever": [
         "How many days has the fever lasted, and what is your current temperature reading?",
-        "Are you experiencing any accompanying symptoms such as cough, sore throat, or body pain?"
+        "Are you experiencing any accompanying symptoms such as cough, sore throat, or body pain?",
+        "Have you taken any antipyretics like paracetamol today, and has the temperature decreased?",
+        "Does your temperature spike at a specific time of day or stay constant?"
     ],
     "back_pain": [
         "Did this back pain begin after heavy lifting or physical strain, and does it radiate down either of your legs?",
-        "Do you feel any numbness, weakness in your lower limbs, or difficulty with posture?"
+        "Do you feel any numbness, weakness in your lower limbs, or difficulty with posture?",
+        "Does the pain worsen when sitting, standing, or bending forward?",
+        "Have you experienced any morning stiffness or recent spinal injury?"
     ],
     "headache": [
         "How long have you had this headache, and is it accompanied by nausea, dizziness, or light sensitivity?",
-        "Have you noticed any neck stiffness or visual changes along with the pain?"
+        "Have you noticed any neck stiffness or visual changes along with the pain?",
+        "Is the head pain concentrated on one side or felt around your forehead and eyes?",
+        "Is the pain throbbing or a dull ache, and what makes it feel better?"
     ],
     "acid_reflux": [
         "How frequently do you experience this acid reflux, and does the burning worsen after specific meals or when lying down?",
-        "Are you experiencing any difficulty swallowing, persistent burping, or stomach pain?"
+        "Are you experiencing any difficulty swallowing, persistent burping, or stomach pain?",
+        "How long after eating do these acid burning symptoms usually start?",
+        "Have you tried any antacids or over-the-counter medications so far?"
     ]
 }
+
+# Conversational Intro Transitions for Variety
+VARIED_TRANSITIONS = [
+    "",  # Direct question!
+    "To better understand your situation, ",
+    "Before we look at self-care options, ",
+    "Could you clarify a few quick details first? ",
+    "To help me give you the most accurate advice, ",
+    "Before outlining recommendations, "
+]
 
 # Signature & Advertisement Stripping Patterns
 STRIP_PATTERNS = [
@@ -135,7 +155,6 @@ def clean_user_input(text):
 
 def clean_doctor_output(text):
     c = clean_unicode(text)
-    # Strip numbering artifacts (1., 2), etc.)
     c = re.sub(r'\b\d+[\.\)]\s*', '', c)
     
     for p in STRIP_PATTERNS:
@@ -158,13 +177,22 @@ def get_category(text):
             return cat
     return None
 
-def restructure_doctor_turn(output_text, category):
+def restructure_doctor_turn(output_text, category, idx):
     cleaned = clean_doctor_output(output_text)
     
-    # Pick targeted diagnostic follow-up question
-    q_pair = DIAGNOSTIC_QUESTIONS.get(category, DIAGNOSTIC_QUESTIONS["fatigue"])
-    followup_q = f"Before recommending a self-care plan: {q_pair[0]}"
+    # Select varied diagnostic follow-up question and transition
+    questions = DIAGNOSTIC_VARIATIONS.get(category, DIAGNOSTIC_VARIATIONS["fatigue"])
+    selected_q = questions[idx % len(questions)]
+    selected_trans = VARIED_TRANSITIONS[idx % len(VARIED_TRANSITIONS)]
     
+    if selected_trans:
+        if selected_trans.endswith("? "):
+            followup_q = f"{selected_trans}{selected_q}"
+        else:
+            followup_q = f"{selected_trans}{selected_q[0].lower() + selected_q[1:]}"
+    else:
+        followup_q = selected_q
+        
     # Truncate advice body under 130 words total
     words = cleaned.split()
     max_advice_words = 85
@@ -178,7 +206,6 @@ def restructure_doctor_turn(output_text, category):
         
     full_response = f"{followup_q}\n\n{advice_body}"
     
-    # Enforce strict < 130 words cap
     res_words = full_response.split()
     if len(res_words) > 125:
         full_response = " ".join(res_words[:125]).rstrip(".,;:") + "."
@@ -263,9 +290,9 @@ def process_dataset():
     chatml_pairs = []
     category_counts = defaultdict(int)
     
-    for user_inp, doc_out, cat in selected_items:
+    for idx, (user_inp, doc_out, cat) in enumerate(selected_items):
         category_counts[cat] += 1
-        a_restructured = restructure_doctor_turn(doc_out, cat)
+        a_restructured = restructure_doctor_turn(doc_out, cat, idx)
         
         turn = {
             "messages": [
@@ -287,10 +314,6 @@ def process_dataset():
     print("\nFinal Category Distribution in Exported Dataset:")
     for cat, cnt in category_counts.items():
         print(f"  - {cat}: {cnt}")
-
-    # Validate first item
-    print("\nValidation check on first pair:")
-    print(json.dumps(chatml_pairs[0], indent=2))
 
 if __name__ == "__main__":
     process_dataset()
