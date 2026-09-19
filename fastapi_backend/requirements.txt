@@ -19,3 +19,4 @@ asyncpg
 pgvector
 psycopg2-binary
 sentence-transformers
+datasets
