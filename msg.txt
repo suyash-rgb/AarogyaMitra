@@ -1,10 +1,10 @@
-Add EkaCare dataset preprocessing script and update requirements
+Add FirstAidQA emergency dataset preprocessing script and ChatML dataset export
 
-- Appended `datasets` library to `fastapi_backend/requirements.txt`
-- Created `preprocess_ekacare_datasets.py` to download, clean, and convert `ekacare/indian_drug_mcqa` and `ekacare/clinical_note_generation_dataset` to ChatML format.
-- Handled text overlap artifacts by identifying and filtering out doctor conversational prompts from EkaCare clinical notes, successfully extracting clean patient inquiries and medical advice turns.
-- Maintained Hinglish dialogue turns where suitable for realistic patient query representation, while removing fragmented template overlaps.
-- Generated a final balanced dataset containing exactly 750 ChatML pairs:
-  - 536 Indian Brand & Generic OTC Pairs
-  - 214 Clean Clinical Doctor-Patient Interaction Pairs
-- Safely handled dataset exports by ensuring `.gitignore` continues to ignore `datasets/fine-tuning/`.
+- Created `preprocess_firstaid_dataset.py` in `fastapi_backend/scripts/data_preprocessing/` to filter, clean, and reformat `firstaidqa_v1.json`.
+- Filtered exclusively for high-acuity physical emergencies across 7 categories: cardiac arrest, airway obstruction/choking, arterial bleeding, electrical shock, chemical/thermal burns, fractures, and venomous bites.
+- Excluded minor dermatological and non-urgent queries.
+- Stripped all conversational fillers ("Hello", "Thank you for your question", "I am sorry to hear that").
+- Reformatted all assistant responses strictly into 4 to 5 numbered steps starting with active imperative verbs ("Apply", "Elevate", "Do not", "Position", "Flush", "Immobilize", etc.).
+- Appended mandatory standard emergency dispatch trigger: "Call 108/112 immediately if patient is unresponsive."
+- Generated and exported exactly 1,000 ChatML pairs to `datasets/fine-tuning/firstaidqa-clean.json`.
+- Updated `dataset_preprocessing_report.md` with complete documentation, sampling breakdown, and preprocessing logic.
