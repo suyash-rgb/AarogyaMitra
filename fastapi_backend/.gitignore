@@ -92,3 +92,7 @@ datasets/
 
 # SeleniumBase downloaded files
 downloaded_files/
+
+# Ignore fine-tuning datasets (both clean and unclean)
+datasets/fine-tuning/
+

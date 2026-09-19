@@ -151,3 +151,6 @@ designs/
 # Untracked temporary files and design assets
 /dljflsjfnksdskdncknsd
 /profile section.jpeg
+# Ignore fine-tuning datasets (both clean and unclean)
+datasets/fine-tuning/
+
