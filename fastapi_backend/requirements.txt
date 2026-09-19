@@ -10,7 +10,16 @@ asyncmy
 IndicTransToolkit
 transformers<4.57.6
 sentencepiece
+sacremoses
+indic-transliteration
 torch
+torchaudio
+soundfile
+scipy
+librosa
+SpeechRecognition
+gTTS
+parler-tts
 pandas
 openpyxl
 groq

@@ -1,7 +1,5 @@
-Refine ChatDoctor dataset preprocessing with dynamic diagnostic question variations
+Update fastapi_backend/requirements.txt with voice service and AI4Bharat dependencies
 
-- Updated `preprocess_chatdoctor_dataset.py` to eliminate repetitive static prefix strings ("Before recommending a self-care plan").
-- Implemented 60+ dynamic, natural conversational question variations and transitions to prevent LLM fine-tuning memorization and token artifact overfitting.
-- Strengthened exclusion filters to catch hyphenated surgical and inpatient procedure terms (e.g. `by-pass`, `post-op`).
-- Exported 750 clean ChatML pairs to `datasets/fine-tuning/chatdoctor-clean.json` (avg 90.9 words per assistant turn).
-- Updated `dataset_preprocessing_report.md` artifact with refined methodology details.
+- Verified `ai4bharat/indictrans2-en-indic-dist-200M` model usage in `translation_service.py` and added missing preprocessing helpers (`sacremoses`, `indic-transliteration`).
+- Added voice service speech recognition and TTS runtime dependencies (`SpeechRecognition`, `gTTS`).
+- Added AI4Bharat Indic Speech/STT/TTS PyTorch audio processing packages (`torchaudio`, `soundfile`, `scipy`, `librosa`, `parler-tts`).
