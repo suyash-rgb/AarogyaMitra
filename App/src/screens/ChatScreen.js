@@ -178,12 +178,6 @@ export default function ChatScreen({ chat, allChats = [], goBack, openProfile, o
               getTranslation(currentLanguage, 'doctor'),
               getTranslation(currentLanguage, 'help')
             ]
-          },
-          {
-            id: 'msg-2',
-            text: getTranslation(currentLanguage, 'info'),
-            sender: 'other',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ];
 
