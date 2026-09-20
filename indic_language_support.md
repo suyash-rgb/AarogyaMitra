@@ -1,3 +1,46 @@
+<div align="center">
+
+<h2>ArogyaMitra App: 22 Indic Languages Support</h2>
+
+<table>
+  <tr>
+    <td align="center"><b>Assamese</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/01_as_Assamese.png" width="200" /></td>
+    <td align="center"><b>Bengali</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/02_bn_Bengali.png" width="200" /></td>
+    <td align="center"><b>Bodo</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/03_brx_Bodo.png" width="200" /></td>
+    <td align="center"><b>Dogri</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/04_doi_Dogri.png" width="200" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Gujarati</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/05_gu_Gujarati.png" width="200" /></td>
+    <td align="center"><b>Hindi</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/06_hi_Hindi.png" width="200" /></td>
+    <td align="center"><b>Kannada</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/07_kn_Kannada.png" width="200" /></td>
+    <td align="center"><b>Kashmiri</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/08_ks_Kashmiri.png" width="200" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Konkani</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/09_gom_Konkani.png" width="200" /></td>
+    <td align="center"><b>Maithili</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/10_mai_Maithili.png" width="200" /></td>
+    <td align="center"><b>Malayalam</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/11_ml_Malayalam.png" width="200" /></td>
+    <td align="center"><b>Manipuri</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/12_mni_Manipuri.png" width="200" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Marathi</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/13_mr_Marathi.png" width="200" /></td>
+    <td align="center"><b>Nepali</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/14_ne_Nepali.png" width="200" /></td>
+    <td align="center"><b>Odia</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/15_or_Odia.png" width="200" /></td>
+    <td align="center"><b>Punjabi</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/16_pa_Punjabi.png" width="200" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Sanskrit</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/17_sa_Sanskrit.png" width="200" /></td>
+    <td align="center"><b>Santali</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/18_sat_Santali.png" width="200" /></td>
+    <td align="center"><b>Sindhi</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/19_sd_Sindhi.png" width="200" /></td>
+    <td align="center"><b>Tamil</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/20_ta_Tamil.png" width="200" /></td>
+  </tr>
+  <tr>
+    <td align="center"><b>Telugu</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/21_te_Telugu.png" width="200" /></td>
+    <td align="center"><b>Urdu</b><br><img src="https://raw.githubusercontent.com/suyash-rgb/Sunstone-Hackathon_1.0-Rural-Healthcare-AI-Bot/whatsapp-app-simulation/App/assets/screenshots/languages/22_ur_Urdu.png" width="200" /></td>
+  </tr>
+</table>
+
+</div>
+
 # 🇮🇳 Official 22 Languages of India (8th Schedule Support)
 
 ArogyaMitra supports all **22 official languages of India** listed under the 8th Schedule of the Indian Constitution for text UI translation, voice input identification (LID), speech synthesis (TTS), and localized health scheme discovery:
