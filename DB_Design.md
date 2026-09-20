@@ -6,7 +6,7 @@ This document defines the relational, spatial, and hybrid-search database design
 
 ## 1. System Architecture Diagram
 
-`mermaid
+````mermaid
 graph TD
     A1[Excel Dataset: health_schemes.xlsx] -->|Seed & Embedding Script| B[(PostgreSQL Database)]
     A2[CSV Dataset: 192,905 Public Health Facilities] -->|Facility Seed Script| B
@@ -28,7 +28,7 @@ graph TD
     B5 -->|pgvector HNSW Search| Engine
     Engine -->|Rank Fusion Top Chunks| Groq[Groq LLM API]
     Groq -->|Final Response| C2[RAG Chatbot API]
-`
+````
 
 ---
 
