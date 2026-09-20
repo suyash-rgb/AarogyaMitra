@@ -47,9 +47,9 @@ ArogyaMitra supports all **22 official languages of India** listed under the 8th
 
 | # | Language Name | ISO 639 Code | Native Name / Script | Supported Features |
 |---|---------------|--------------|----------------------|-------------------|
-| 1 | Assamese | s | অসমীয়া | UI Translation, TTS, ASR |
-| 2 | Bengali | n | বাংলা | UI Translation, TTS, ASR |
-| 3 | Bodo | rx | बड़ो | UI Translation, TTS |
+| 1 | Assamese | as | অসমীয়া | UI Translation, TTS, ASR |
+| 2 | Bengali | bn | বাংলা | UI Translation, TTS, ASR |
+| 3 | Bodo | brx | बड़ो | UI Translation, TTS |
 | 4 | Dogri | doi | डोगरी | UI Translation, TTS |
 | 5 | Gujarati | gu | ગુજરાતી | UI Translation, TTS, ASR |
 | 6 | Hindi | hi | हिंदी | Full Multimodal & Voice |
@@ -60,15 +60,14 @@ ArogyaMitra supports all **22 official languages of India** listed under the 8th
 | 11 | Malayalam | ml | മലയാളം | UI Translation, TTS, ASR |
 | 12 | Manipuri | mni | মৈতৈলোন্ | UI Translation, TTS |
 | 13 | Marathi | mr | मराठी | UI Translation, TTS, ASR |
-| 14 | Nepali | 
-e | नेपाली | UI Translation, TTS |
+| 14 | Nepali | ne | नेपाली | UI Translation, TTS |
 | 15 | Odia | or | ଓଡ଼ିଆ | UI Translation, TTS, ASR |
 | 16 | Punjabi | pa | ਪੰਜਾਬੀ | UI Translation, TTS, ASR |
 | 17 | Sanskrit | sa | संस्कृतम् | UI Translation, TTS |
 | 18 | Santali | sat | ᱥᱟᱱᱛᱟᱲᱤ | UI Translation, TTS |
 | 19 | Sindhi | sd | سنڌي | UI Translation, TTS |
-| 20 | Tamil | 	a | தமிழ் | UI Translation, TTS, ASR |
-| 21 | Telugu | 	e | తెలుగు | UI Translation, TTS, ASR |
+| 20 | Tamil | ta | தமிழ் | UI Translation, TTS, ASR |
+| 21 | Telugu | te | తెలుగు | UI Translation, TTS, ASR |
 | 22 | Urdu | ur | اردو | UI Translation, TTS |
 
 ---
