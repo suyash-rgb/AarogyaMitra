@@ -36,7 +36,14 @@ export function setCurrentLanguage(langCode) {
 export function getSavedChats() {
   try {
     const raw = localStorage.getItem(KEYS.CHATS);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      // Filter out any personal contact chats
+      const officialOnly = parsed.filter(c => c.isOfficial || c.id === 'ai-bot' || c.id === 'meta-ai');
+      return officialOnly.length ? officialOnly : null;
+    }
+    return null;
   } catch (e) {
     console.error('Failed to load saved chats', e);
     return null;
