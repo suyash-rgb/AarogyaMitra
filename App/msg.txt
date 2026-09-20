@@ -1,0 +1,8 @@
+Fix initial load message translations and screenshot generation issues
+
+- Addressed issue where the initial system message (msg-0) always loaded in English regardless of the selected language. Implemented dynamic translation in `useBotLogic.js` using `getTranslation` on language switch.
+- Fixed screenshot cropping issues where the image was cropped from the top and bottom in the generated output. Enforced absolute viewport pinning (100vw x 100vh) in the HTML generation template.
+- Resolved malformed icons in screenshots by replacing font-based rendering with inline vector SVG injections for Smile, Paperclip, Camera, and Mic icons.
+- Ensured dark mode was disabled and the application loads in standard white mode during automated screenshot captures.
+- Fixed issue with user profile placeholder images not loading correctly by embedding official logos directly into the template.
+- Removed extraneous "online" status text from the chat header to match expected clean UI for screenshots.
