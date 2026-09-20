@@ -263,7 +263,7 @@ export const INITIAL_CHATS = [
   {
     id: 'ai-bot',
     name: 'Aarogya Mitra',
-    avatar: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=150&auto=format&fit=crop&q=80',
+    avatar: '/aarogyamitra_logo.png',
     isOfficial: true,
     isMetaAI: false,
     verifiedBadge: true,
@@ -286,7 +286,7 @@ export const INITIAL_CHATS = [
   {
     id: 'meta-ai',
     name: 'Meta AI',
-    avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
+    avatar: '/meta-ai-logo.png',
     isOfficial: true,
     isMetaAI: true,
     verifiedBadge: true,
