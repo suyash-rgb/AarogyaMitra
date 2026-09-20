@@ -1,3 +1,4 @@
+from fastapi import Query
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,7 +26,7 @@ translation_service = TranslationService()
 async def classify_and_route_user_intent(
     req: IntentRequest,
     db: AsyncSession = Depends(get_session)
-):
+, deviceId: str = Query(..., description="Device ID")):
     query = req.query.strip()
     if not query:
         raise HTTPException(

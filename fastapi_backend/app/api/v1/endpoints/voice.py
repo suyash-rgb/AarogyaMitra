@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
@@ -17,7 +17,7 @@ voice_service = VoiceService()
 async def speech_to_text_endpoint(
     file: UploadFile = File(...),
     lang_tag: str = Form('hin_Deva')
-):
+, deviceId: str = Query(..., description="Device ID")):
     try:
         audio_bytes = await file.read()
         res = await voice_service.speech_to_text(audio_bytes=audio_bytes, lang_tag=lang_tag)
@@ -28,7 +28,7 @@ async def speech_to_text_endpoint(
         raise HTTPException(status_code=500, detail=f'STT processing failed: {str(e)}')
 
 @router.post('/tts', response_model=TTSResponse)
-async def text_to_speech_endpoint(request: TTSRequest):
+async def text_to_speech_endpoint(request: TTSRequest, deviceId: str = Query(..., description="Device ID")):
     try:
         res = await voice_service.text_to_speech(
             text=request.text, 
@@ -46,7 +46,7 @@ async def process_voice_chat_endpoint(
     file: UploadFile = File(...),
     lang_tag: str = Form('hin_Deva'),
     db: AsyncSession = Depends(get_session)
-):
+, deviceId: str = Query(..., description="Device ID")):
     try:
         audio_bytes = await file.read()
         res = await voice_service.process_voice_chat(

@@ -17,7 +17,7 @@ async def get_nearby_emergency_facilities(
     radius_km: float = Query(10.0, ge=0.1, le=100.0, description="Search radius in kilometers (default 10km)"),
     radius: Optional[int] = Query(None, description="Alternative search radius in meters"),
     session: AsyncSession = Depends(get_session)
-):
+, deviceId: str = Query(..., description="Device ID")):
     """
     Unified Emergency Search API combining verified public healthcare facilities from PostgreSQL (192k+ records)
     with live commercial/crowdsourced POI APIs (OlaMaps & OpenStreetMap).

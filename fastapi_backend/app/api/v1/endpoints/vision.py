@@ -26,7 +26,7 @@ async def analyze_image(
                     "Set to False if it is a photograph of a rash/injury (runs Cloud VLM)."
     ),
     service: VisionService = Depends(get_vision_service)
-):
+, deviceId: str = Query(..., description="Device ID")):
     """
     Upload an image for analysis.
     

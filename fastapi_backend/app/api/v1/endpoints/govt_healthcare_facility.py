@@ -22,7 +22,7 @@ async def get_nearby_govt_facilities(
     facility_type: str = Query("all", description="Filter by facility type substring (e.g. 'SubCentre', 'District Hospital', 'PHC')"),
     limit: int = Query(20, ge=1, le=100, description="Max results to return"),
     session: AsyncSession = Depends(get_session)
-):
+, deviceId: str = Query(..., description="Device ID")):
     """
     High-speed spatial search querying 192,000+ verified government healthcare facilities from PostgreSQL.
     Uses bounding-box pre-filtering and exact Haversine distance calculation in SQL.
@@ -56,7 +56,7 @@ async def search_govt_facilities(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Results per page"),
     session: AsyncSession = Depends(get_session)
-):
+, deviceId: str = Query(..., description="Device ID")):
     """
     Filter and list government healthcare facilities by administrative boundary (State, District, Taluka, Block, Pincode) 
     or text search query with pagination.
@@ -80,7 +80,7 @@ async def get_govt_facility_locations(
     state_name: Optional[str] = Query(None, description="Provide state to list districts"),
     district_name: Optional[str] = Query(None, description="Provide district (along with state) to list talukas & blocks"),
     session: AsyncSession = Depends(get_session)
-):
+, deviceId: str = Query(..., description="Device ID")):
     """
     Returns available administrative locations for building cascading dropdown filters in UI:
     - If no parameters: returns all distinct States.
@@ -97,7 +97,7 @@ async def get_govt_facility_locations(
 async def get_govt_facility_by_id(
     facility_id: int,
     session: AsyncSession = Depends(get_session)
-):
+, deviceId: str = Query(..., description="Device ID")):
     facility = await govt_healthcare_facility_service.get_facility_by_id(session=session, facility_id=facility_id)
     if not facility:
         raise HTTPException(status_code=404, detail=f"Government healthcare facility with ID {facility_id} not found.")

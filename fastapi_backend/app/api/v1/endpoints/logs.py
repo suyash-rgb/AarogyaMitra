@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from pydantic import BaseModel
 import logging
 
@@ -12,7 +12,7 @@ class LogMessage(BaseModel):
     source: str
 
 @router.post("/", status_code=201)
-async def receive_log(log_msg: LogMessage):
+async def receive_log(log_msg: LogMessage, deviceId: str = Query(..., description="Device ID")):
     formatted_msg = f"[FRONTEND - {log_msg.source}] {log_msg.timestamp} | {log_msg.message}"
     if log_msg.level.lower() == "error":
         logger.error(formatted_msg)

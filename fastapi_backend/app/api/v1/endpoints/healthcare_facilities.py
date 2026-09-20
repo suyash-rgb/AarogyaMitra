@@ -14,7 +14,7 @@ async def get_nearby_facilities(
     radius: int = Query(5000, description="Search radius in meters"),
     facility_type: str = Query("all", description="Facility type filter: 'all' or 'government'"),
     exclude_specialty: bool = Query(True, description="Filter out non-general specialized clinics (dental, skin, etc.)")
-):
+, deviceId: str = Query(..., description="Device ID")):
     final_lat = lat if lat is not None else latitude
     final_lon = lon if lon is not None else longitude
 

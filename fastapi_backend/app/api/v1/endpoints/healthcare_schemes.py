@@ -20,7 +20,7 @@ async def get_health_schemes(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(10, ge=1, le=100, description="Items per page"),
     db: AsyncSession = Depends(get_session)
-):
+, deviceId: str = Query(..., description="Device ID")):
     """Retrieve paginated health schemes with filter options."""
     return await HealthCareSchemesService.get_schemes_paginated(
         db=db, state=state, level=level, category=category,
@@ -28,17 +28,17 @@ async def get_health_schemes(
     )
 
 @router.get("/meta/states", response_model=List[str])
-async def get_available_states(db: AsyncSession = Depends(get_session)):
+async def get_available_states(db: AsyncSession = Depends(get_session), deviceId: str = Query(..., description="Device ID")):
     """List all available distinct states/UTs."""
     return await HealthCareSchemesService.get_available_states(db=db)
 
 @router.get("/meta/categories", response_model=List[str])
-async def get_available_categories(db: AsyncSession = Depends(get_session)):
+async def get_available_categories(db: AsyncSession = Depends(get_session), deviceId: str = Query(..., description="Device ID")):
     """List all unique scheme categories."""
     return await HealthCareSchemesService.get_available_categories(db=db)
 
 @router.get("/{id_or_slug}", response_model=HealthSchemeDetailResponse)
-async def get_scheme_detail(id_or_slug: str, db: AsyncSession = Depends(get_session)):
+async def get_scheme_detail(id_or_slug: str, db: AsyncSession = Depends(get_session), deviceId: str = Query(..., description="Device ID")):
     """Retrieve full scheme detail by internal ID or slug."""
     scheme = await HealthCareSchemesService.get_scheme_by_id_or_slug(db=db, id_or_slug=id_or_slug)
     if not scheme:
@@ -49,7 +49,7 @@ async def get_scheme_detail(id_or_slug: str, db: AsyncSession = Depends(get_sess
 async def rag_hybrid_search(
     req: RAGSearchRequest,
     db: AsyncSession = Depends(get_session)
-):
+, deviceId: str = Query(..., description="Device ID")):
     """Perform hybrid vector & relational search and generate Groq AI answer."""
     return await HealthCareSchemesService.perform_rag_hybrid_search(
         db=db, user_query=req.query, state=req.state, top_k=req.top_k

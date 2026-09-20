@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, HTTPException
+﻿from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from app.services.translation_service import TranslationService
 
@@ -22,7 +22,7 @@ class TranslationResponse(BaseModel):
     tgt_lang: str
 
 @router.post("/", response_model=TranslationResponse)
-async def translate_text(request: TranslationRequest):
+async def translate_text(request: TranslationRequest, deviceId: str = Query(..., description="Device ID")):
     if not request.text or not request.text.strip():
         raise HTTPException(status_code=400, detail="Input text cannot be empty.")
     
