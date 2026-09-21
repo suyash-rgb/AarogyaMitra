@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, TouchableOpacity, ScrollView, ActivityIndicator, Linking, StyleSheet, Share } from 'react-native';
 import { X, FileText, ExternalLink, HelpCircle, FileCheck, CheckCircle2, Share2 } from 'lucide-react-native';
 import { getSchemeDetails } from '../services/apiService';
+import { TtsPlayerButton } from './TtsPlayerButton';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: FileText },
@@ -81,12 +82,18 @@ export const SchemeDetailsModal = ({ visible, onClose, schemeId }) => {
       case 'overview':
         return (
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.sectionTitle}>Brief Description</Text>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+              <Text style={[styles.sectionTitle, {marginBottom: 0}]}>Brief Description</Text>
+              <TtsPlayerButton text={details.brief_description || 'No description available.'} size={20} color="#128C7E" />
+            </View>
             <Text style={styles.bodyText}>{details.brief_description || 'No description available.'}</Text>
             
             {details.description && (
               <>
-                <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Detailed Overview</Text>
+                <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, marginTop: 16}}>
+                  <Text style={[styles.sectionTitle, {marginBottom: 0, marginTop: 0}]}>Detailed Overview</Text>
+                  <TtsPlayerButton text={details.description} size={20} color="#128C7E" />
+                </View>
                 <Text style={styles.bodyText}>{details.description}</Text>
               </>
             )}
@@ -101,14 +108,20 @@ export const SchemeDetailsModal = ({ visible, onClose, schemeId }) => {
       case 'benefits':
         return (
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.sectionTitle}>Benefits</Text>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+              <Text style={[styles.sectionTitle, {marginBottom: 0}]}>Benefits</Text>
+              <TtsPlayerButton text={details.benefits || 'No specific benefits documented.'} size={20} color="#128C7E" />
+            </View>
             <Text style={styles.bodyText}>{details.benefits || 'No specific benefits documented.'}</Text>
           </ScrollView>
         );
       case 'eligibility':
         return (
           <ScrollView contentContainerStyle={styles.scrollContent}>
-            <Text style={styles.sectionTitle}>Eligibility Criteria</Text>
+            <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12}}>
+              <Text style={[styles.sectionTitle, {marginBottom: 0}]}>Eligibility Criteria</Text>
+              <TtsPlayerButton text={details.eligibility || 'No specific eligibility criteria documented.'} size={20} color="#128C7E" />
+            </View>
             <Text style={styles.bodyText}>{details.eligibility || 'No specific eligibility criteria documented.'}</Text>
           </ScrollView>
         );

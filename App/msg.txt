@@ -1,6 +1,0 @@
-fix: X-Device-ID 422 errors
-
-The React Native frontend client apiClient.js was passing deviceId inside the HTTP Header (X-Device-ID: <id>), but was omitting it from the request URL's query parameters when invoking /meta/states as a result FastAPI failed the incoming request parameter validation and responded with HTTP 422 (Unprocessable Entity).
-
-correctly modified fetchWithDeviceContext in apiClient.js to automatically check for and append deviceId as a query parameter (e.g., ?deviceId=...) if it is not already present in the endpoint URL.
-This automatically resolves the issue across all frontend API service calls (including state fetching, scheme queries, and TTS endpoints) without requiring changes to individual caller functions.
