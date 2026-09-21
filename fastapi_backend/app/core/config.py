@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     OLA_MAPS_KRUTRIM_CLOUD_API_KEY: Optional[str] = None
     OLA_MAPS_KRUTRIM_CLOUD_API_BASE_URL: str = "https://api.olamaps.io"
 
+    # Valkey Cache Settings
+    VALKEY_HOST: str = "localhost"
+    VALKEY_PORT: int = 6379
+    VALKEY_DB: int = 0
+    VALKEY_TTS_TTL_SECONDS: int = 86400
+
     @property
     def resolved_ola_maps_api_key(self) -> str:
         return self.OLA_MAPS_KRUTRIM_CLOUD_API_KEY or ""
@@ -30,3 +36,4 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+
