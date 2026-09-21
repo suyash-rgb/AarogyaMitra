@@ -652,3 +652,4 @@ When a user asks, *"Show me maternal health schemes in Madhya Pradesh for BPL fa
 4. **Serve (Instantly):** When a user taps the button in the app, the FastAPI server instantly queries our local database and returns the perfectly formatted local-language data.
 
 This approach guarantees high performance, 100% uptime for the user, and a highly polished, native experience!
+
