@@ -1,12 +1,73 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, Pressable } from 'react-native';
-import { CheckCheck, FileText, User, CornerUpRight } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Image, Pressable, ActivityIndicator } from 'react-native';
+import { CheckCheck, FileText, User, CornerUpRight, Volume2, VolumeX } from 'lucide-react-native';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { styles } from '../../constants/styles';
 import AudioMessage from '../AudioMessage';
 import { HospitalCard } from '../HospitalCard';
 import { SchemeCard } from '../SchemeCard';
-
 import { FormattedMarkdownText } from './FormattedMarkdownText';
+import { requestTTS } from '../../services/apiService';
+
+const TtsPlayerButton = ({ text, langTag }) => {
+  const [audioUri, setAudioUri] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const player = useAudioPlayer(audioUri);
+  const status = useAudioPlayerStatus(player);
+
+  useEffect(() => {
+    if (audioUri && player && status.isLoaded && !status.playing && isLoading) {
+      player.play();
+      setIsLoading(false);
+    }
+  }, [audioUri, status.isLoaded]);
+
+  useEffect(() => {
+    if (status.didJustFinish || (status.currentTime > 0 && status.currentTime >= status.duration)) {
+      setAudioUri(null);
+    }
+  }, [status.playing, status.currentTime, status.duration]);
+
+  const handlePress = async () => {
+    if (status.playing) {
+      if (player) player.pause();
+      setAudioUri(null);
+      return;
+    }
+
+    if (isLoading) return;
+
+    try {
+      setIsLoading(true);
+      const res = await requestTTS(text, langTag || 'hin_Deva');
+      if (res && res.audio_base64) {
+        const uri = `data:audio/mp3;base64,${res.audio_base64}`;
+        setAudioUri(uri);
+      } else {
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.warn('TTS Request error:', err);
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <TouchableOpacity 
+      onPress={handlePress} 
+      style={{ marginRight: 6, padding: 2 }}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+    >
+      {isLoading ? (
+        <ActivityIndicator size="small" color="#00A884" />
+      ) : status.playing ? (
+        <VolumeX size={15} color="#00A884" />
+      ) : (
+        <Volume2 size={15} color="#8696a0" />
+      )}
+    </TouchableOpacity>
+  );
+};
 
 export const ChatMessageBubble = ({ 
   msg, 
@@ -106,6 +167,9 @@ export const ChatMessageBubble = ({
         )}
         
         <View style={styles.bubbleFooter}>
+          {!isMe && msg.text ? (
+            <TtsPlayerButton text={msg.text} langTag={msg.langTag} />
+          ) : null}
           <Text style={styles.bubbleTime}>{msg.time}</Text>
           {isMe && <CheckCheck size={14} color="#53bdeb" style={styles.checkIcon} />}
         </View>
@@ -165,4 +229,5 @@ export const ChatMessageBubble = ({
     </View>
   );
 };
+
 

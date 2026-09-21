@@ -16,16 +16,22 @@ export const fetchWithDeviceContext = async (endpoint, options = {}) => {
     ...(options.headers || {})
   };
 
-  const url = `${BASE_URL}${endpoint}`;
+  // Automatically append deviceId query parameter if not present
+  const hasQuery = endpoint.includes('?');
+  const separator = hasQuery ? '&' : '?';
+  const urlWithDeviceId = endpoint.includes('deviceId=')
+    ? `${BASE_URL}${endpoint}`
+    : `${BASE_URL}${endpoint}${separator}deviceId=${encodeURIComponent(deviceId)}`;
 
-  const response = await fetch(url, {
+  const response = await fetch(urlWithDeviceId, {
     ...options,
     headers
   });
 
   if (!response.ok) {
-    throw new Error(`API Error: ${response.status} at ${url}`);
+    throw new Error(`API Error: ${response.status} at ${urlWithDeviceId}`);
   }
 
   return response.json();
 };
+

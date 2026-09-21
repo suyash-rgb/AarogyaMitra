@@ -1,8 +1,6 @@
-Fix initial load message translations and screenshot generation issues
+fix: X-Device-ID 422 errors
 
-- Addressed issue where the initial system message (msg-0) always loaded in English regardless of the selected language. Implemented dynamic translation in `useBotLogic.js` using `getTranslation` on language switch.
-- Fixed screenshot cropping issues where the image was cropped from the top and bottom in the generated output. Enforced absolute viewport pinning (100vw x 100vh) in the HTML generation template.
-- Resolved malformed icons in screenshots by replacing font-based rendering with inline vector SVG injections for Smile, Paperclip, Camera, and Mic icons.
-- Ensured dark mode was disabled and the application loads in standard white mode during automated screenshot captures.
-- Fixed issue with user profile placeholder images not loading correctly by embedding official logos directly into the template.
-- Removed extraneous "online" status text from the chat header to match expected clean UI for screenshots.
+The React Native frontend client apiClient.js was passing deviceId inside the HTTP Header (X-Device-ID: <id>), but was omitting it from the request URL's query parameters when invoking /meta/states as a result FastAPI failed the incoming request parameter validation and responded with HTTP 422 (Unprocessable Entity).
+
+correctly modified fetchWithDeviceContext in apiClient.js to automatically check for and append deviceId as a query parameter (e.g., ?deviceId=...) if it is not already present in the endpoint URL.
+This automatically resolves the issue across all frontend API service calls (including state fetching, scheme queries, and TTS endpoints) without requiring changes to individual caller functions.

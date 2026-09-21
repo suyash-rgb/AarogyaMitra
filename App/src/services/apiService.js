@@ -49,3 +49,21 @@ export const classifyIntent = async (query, userContext = {}) => {
   });
 };
 
+/**
+ * Voice / Text-To-Speech API Service
+ */
+export const requestTTS = async (text, languageTag = 'hin_Deva') => {
+  return await fetchWithDeviceContext('/voice/tts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      text,
+      language_tag: languageTag,
+      slow: false
+    }),
+  });
+};
+
+
