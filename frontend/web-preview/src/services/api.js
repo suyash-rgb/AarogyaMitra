@@ -116,3 +116,21 @@ export async function fetchNearbyFacilities(lat, lon) {
   }
   return NEARBY_FACILITIES;
 }
+
+/**
+ * Fetch Text-to-Speech (TTS) audio for bot messages
+ */
+export async function fetchTTS(text, langTag) {
+  try {
+    const res = await apiClient.post('/api/v1/voice/tts', {
+      text: text,
+      language_tag: langTag
+    });
+    // Assuming backend returns { audio: 'base64...' } or just the base64 string
+    // We'll return the raw data and let the component handle it.
+    return res.data;
+  } catch (e) {
+    console.error('Failed to fetch TTS:', e);
+    throw e;
+  }
+}

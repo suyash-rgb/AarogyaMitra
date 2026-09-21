@@ -1,3 +1,20 @@
-fix: extend Indic lang support
- 
-refer to #12
+feat: TTS for Chat Responses
+
+API Integration: Added fetchTTS in api.js to connect with the /api/v1/voice/tts backend endpoint.
+Audio Playback: Implemented the HTML5 Audio API within 
+
+MessageBubble.jsx to handle decoding and playing the Base64 encoded MP3 returned by the backend.
+
+UI Enhancements:
+Added a "Read Aloud" button (with a Volume2 icon) to the footer of all bot-generated messages.
+Added loading indicators (a spinning circle) that show up while the audio stream is being fetched from the backend.
+The button switches to a "Stop" control while the audio is playing to allow users to halt it easily.
+Markdown Formatting: I included a regex sanitization step (.replace(/[*_~#]/g, '')`) before sending the text to the TTS engine so it doesn't attempt to literally read out asterisks or hashtags.
+
+To make the app significantly more robust, I've just pushed an update to MessageBubble.jsx with a graceful fallback mechanism:
+
+It will still try to hit your backend API first.
+If the backend is offline, it will automatically fall back to the browser's native Text-To-Speech engine (window.speechSynthesis).
+It seamlessly translates your lang context into the standard BCP 47 format (hi-IN, en-IN, etc.) so the browser knows which accent/language model to use.
+
+refer to #15

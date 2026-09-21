@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { CheckCheck, Play, Pause, FileText, Image, Forward, Volume2 } from 'lucide-react';
+import { CheckCheck, Play, Pause, FileText, Image, Forward, Volume2, Loader2, StopCircle } from 'lucide-react';
 import FormattedMarkdownText from './FormattedMarkdownText';
 import QuickReplyButtons from '../widgets/QuickReplyButtons';
 import DoctorCarousel from '../widgets/DoctorCarousel';
@@ -7,6 +7,8 @@ import BookingTicket from '../widgets/BookingTicket';
 import FacilityCarousel from '../widgets/FacilityCarousel';
 import SchemeCarousel from '../widgets/SchemeCarousel';
 import { formatAudioDuration } from '../../utils/audio';
+import { fetchTTS } from '../../services/api';
+import { getCurrentLanguage } from '../../utils/storage';
 
 export default function MessageBubble({
   msg,
@@ -18,6 +20,10 @@ export default function MessageBubble({
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [audioProgress, setAudioProgress] = useState(0);
   const audioRef = useRef(null);
+
+  const [isTtsPlaying, setIsTtsPlaying] = useState(false);
+  const [isTtsFetching, setIsTtsFetching] = useState(false);
+  const ttsAudioRef = useRef(null);
 
   const isUser = msg.sender === 'user';
 
@@ -42,6 +48,73 @@ export default function MessageBubble({
   const handleAudioEnded = () => {
     setIsPlayingAudio(false);
     setAudioProgress(0);
+  };
+
+  const handleReadAloud = async () => {
+    // If playing, stop it
+    if (isTtsPlaying) {
+      if (ttsAudioRef.current && ttsAudioRef.current.isSpeechSynthesis) {
+        window.speechSynthesis.cancel();
+      } else if (ttsAudioRef.current) {
+        ttsAudioRef.current.pause();
+        ttsAudioRef.current.currentTime = 0;
+      }
+      setIsTtsPlaying(false);
+      return;
+    }
+
+    setIsTtsFetching(true);
+    const lang = getCurrentLanguage();
+    const cleanText = msg.text.replace(/[*_~`#]/g, '');
+
+    try {
+      const res = await fetchTTS(cleanText, lang);
+      
+      let base64Audio = res;
+      if (typeof res === 'object' && res.audio) {
+        base64Audio = res.audio;
+      }
+      
+      const audioUrl = base64Audio.startsWith('data:') 
+        ? base64Audio 
+        : `data:audio/mp3;base64,${base64Audio}`;
+        
+      const audio = new Audio(audioUrl);
+      
+      audio.onended = () => {
+        setIsTtsPlaying(false);
+      };
+      
+      ttsAudioRef.current = audio;
+      audio.play();
+      setIsTtsPlaying(true);
+    } catch (err) {
+      console.warn('TTS Backend offline, falling back to browser SpeechSynthesis...', err.message);
+      
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); // clear queue
+        
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        // Attempt to map our lang code to BCP 47
+        utterance.lang = lang === 'en' ? 'en-IN' : `${lang}-IN`; 
+        
+        utterance.onend = () => {
+          setIsTtsPlaying(false);
+        };
+        
+        utterance.onerror = () => {
+          setIsTtsPlaying(false);
+        };
+        
+        ttsAudioRef.current = { isSpeechSynthesis: true };
+        window.speechSynthesis.speak(utterance);
+        setIsTtsPlaying(true);
+      } else {
+        alert('Failed to connect to TTS backend. Is the server running on port 8000?\n\n' + err.message);
+      }
+    } finally {
+      setIsTtsFetching(false);
+    }
   };
 
   return (
@@ -156,9 +229,28 @@ export default function MessageBubble({
         )}
 
         {/* Timestamp & Read Status Footer */}
-        <div className="flex items-center justify-end gap-1 text-[10px] text-gray-500 dark:text-gray-400 mt-1 select-none">
-          <span>{msg.timestamp || '11:45 AM'}</span>
-          {isUser && <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />}
+        <div className="flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400 mt-1 select-none">
+          {!isUser && msg.text && (
+            <button 
+              onClick={handleReadAloud}
+              disabled={isTtsFetching}
+              className="flex items-center gap-1 hover:text-[#00a884] transition-colors disabled:opacity-50"
+              title="Read Aloud"
+            >
+              {isTtsFetching ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : isTtsPlaying ? (
+                <StopCircle className="w-3 h-3" />
+              ) : (
+                <Volume2 className="w-3 h-3" />
+              )}
+              <span>{isTtsFetching ? 'Loading...' : isTtsPlaying ? 'Stop' : 'Read Aloud'}</span>
+            </button>
+          )}
+          <div className="flex items-center justify-end gap-1 ml-auto">
+            <span>{msg.timestamp || '11:45 AM'}</span>
+            {isUser && <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />}
+          </div>
         </div>
       </div>
     </div>
