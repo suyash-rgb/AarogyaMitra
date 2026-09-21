@@ -140,6 +140,21 @@ npx expo start
 
 ---
 
+### 3. Launching the Web App Simulation (React / Vite)
+`ash
+# Ensure you are on the whatsapp-simulation branch (or in its cloned directory)
+# Navigate to the frontend web-preview directory
+cd frontend/web-preview
+
+# Install npm dependencies
+npm install
+
+# Start the Vite development server
+npm run dev
+`
+*Open the provided local URL (usually http://localhost:5173) in your web browser to test the WhatsApp UI simulation.*
+
+
 ## 🛡️ License & Acknowledgments
 
 This project is open-sourced under the [MIT License](LICENSE).
