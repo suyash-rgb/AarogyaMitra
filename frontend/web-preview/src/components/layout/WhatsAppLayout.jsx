@@ -7,8 +7,9 @@ import StateModal from '../modals/StateModal';
 import ContextMenu from '../modals/ContextMenu';
 import ForwardModal from '../modals/ForwardModal';
 import NewChatModal from '../modals/NewChatModal';
+import ThemeModal from '../modals/ThemeModal';
 import ProfileDrawer from '../drawers/ProfileDrawer';
-import { INITIAL_CHATS, INDIC_LANGUAGES, EMPANELED_DOCTORS } from '../../data/mockData';
+import { INITIAL_CHATS, INDIC_LANGUAGES } from '../../data/mockData';
 import { getSavedChats, saveChats, getUserState, setUserState as saveUserState, getCurrentLanguage, setCurrentLanguage as saveLanguage } from '../../utils/storage';
 import { classifyQuery } from '../../services/api';
 import { playNotificationSound } from '../../utils/audio';
@@ -24,6 +25,7 @@ export default function WhatsAppLayout() {
   const [showLangModal, setShowLangModal] = useState(false);
   const [showStateModal, setShowStateModal] = useState(false);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [contextMenuConfig, setContextMenuConfig] = useState(null); // { x, y, message }
   const [forwardMessage, setForwardMessage] = useState(null);
@@ -219,7 +221,7 @@ export default function WhatsAppLayout() {
   };
 
   return (
-    <div className="w-screen h-screen overflow-hidden bg-[#111b21] flex justify-center items-center font-sans">
+    <div className="w-screen h-screen overflow-hidden bg-gray-200 dark:bg-[#0c1317] flex justify-center items-center font-sans">
       <div className="w-full h-full max-w-[1600px] flex shadow-2xl overflow-hidden relative">
         {/* Left Sidebar */}
         <Sidebar
@@ -235,6 +237,7 @@ export default function WhatsAppLayout() {
           onOpenNewChat={() => setShowNewChatModal(true)}
           onOpenStateModal={() => setShowStateModal(true)}
           onOpenLanguageModal={() => setShowLangModal(true)}
+          onOpenThemeModal={() => setShowThemeModal(true)}
           currentState={userState}
           currentLanguageObj={currentLangObj}
         />
@@ -288,6 +291,12 @@ export default function WhatsAppLayout() {
             contacts={chats}
             onSelectContact={(id) => setActiveChatId(id)}
             onClose={() => setShowNewChatModal(false)}
+          />
+        )}
+
+        {showThemeModal && (
+          <ThemeModal
+            onClose={() => setShowThemeModal(false)}
           />
         )}
 

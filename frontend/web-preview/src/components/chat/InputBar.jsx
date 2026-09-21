@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Smile, Paperclip, Mic, Send, Image, FileText, X } from 'lucide-react';
+import { Smile, Paperclip, Mic, Send, Image, FileText } from 'lucide-react';
 import RecordingBar from './RecordingBar';
 
 export default function InputBar({ onSendMessage, onSendMedia, onSendAudio }) {
@@ -54,13 +54,13 @@ export default function InputBar({ onSendMessage, onSendMedia, onSendAudio }) {
   }
 
   return (
-    <div className="relative bg-[#202c33] px-4 py-2.5 flex items-center gap-3 border-t border-gray-700">
+    <div className="relative bg-gray-100 dark:bg-[#202c33] px-4 py-2.5 flex items-center gap-3 border-t border-gray-200 dark:border-gray-700">
       {/* Attachment Popover Menu */}
       {showAttachMenu && (
-        <div className="absolute bottom-14 left-10 z-30 bg-[#233138] border border-gray-700 rounded-2xl shadow-2xl p-2 flex flex-col gap-2 animate-fadeIn">
+        <div className="absolute bottom-14 left-10 z-30 bg-white dark:bg-[#233138] border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-2 flex flex-col gap-2 animate-fadeIn">
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#182229] text-gray-200 rounded-xl text-xs font-semibold transition-all"
+            className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#182229] text-gray-800 dark:text-gray-200 rounded-xl text-xs font-semibold transition-all"
           >
             <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white">
               <Image className="w-4 h-4" />
@@ -69,7 +69,7 @@ export default function InputBar({ onSendMessage, onSendMedia, onSendAudio }) {
           </button>
           <button
             onClick={() => docInputRef.current?.click()}
-            className="flex items-center gap-3 px-4 py-2.5 hover:bg-[#182229] text-gray-200 rounded-xl text-xs font-semibold transition-all"
+            className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#182229] text-gray-800 dark:text-gray-200 rounded-xl text-xs font-semibold transition-all"
           >
             <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
               <FileText className="w-4 h-4" />
@@ -97,12 +97,12 @@ export default function InputBar({ onSendMessage, onSendMedia, onSendAudio }) {
 
       {/* Emoji Picker Popover */}
       {showEmojiPicker && (
-        <div className="absolute bottom-14 left-2 z-30 bg-[#233138] border border-gray-700 rounded-2xl shadow-2xl p-3 grid grid-cols-6 gap-2 animate-fadeIn">
+        <div className="absolute bottom-14 left-2 z-30 bg-white dark:bg-[#233138] border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl p-3 grid grid-cols-6 gap-2 animate-fadeIn">
           {emojis.map((emoji, idx) => (
             <button
               key={idx}
               onClick={() => setText((prev) => prev + emoji)}
-              className="text-xl p-1.5 hover:bg-[#182229] rounded-lg transition-all"
+              className="text-xl p-1.5 hover:bg-gray-100 dark:hover:bg-[#182229] rounded-lg transition-all"
             >
               {emoji}
             </button>
@@ -111,13 +111,13 @@ export default function InputBar({ onSendMessage, onSendMedia, onSendAudio }) {
       )}
 
       {/* Action Buttons Left */}
-      <div className="flex items-center gap-1.5 text-gray-400">
+      <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
         <button
           onClick={() => {
             setShowEmojiPicker((prev) => !prev);
             setShowAttachMenu(false);
           }}
-          className="p-1.5 hover:text-gray-200 hover:bg-[#2a3942] rounded-full transition-all"
+          className="p-1.5 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
         >
           <Smile className="w-6 h-6" />
         </button>
@@ -127,21 +127,21 @@ export default function InputBar({ onSendMessage, onSendMedia, onSendAudio }) {
             setShowAttachMenu((prev) => !prev);
             setShowEmojiPicker(false);
           }}
-          className="p-1.5 hover:text-gray-200 hover:bg-[#2a3942] rounded-full transition-all"
+          className="p-1.5 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
         >
           <Paperclip className="w-6 h-6 rotate-45" />
         </button>
       </div>
 
       {/* Center Input Field */}
-      <div className="flex-1 bg-[#2a3942] rounded-lg px-4 py-2 flex items-center border border-transparent focus-within:border-[#00a884] transition-all">
+      <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-lg px-4 py-2 flex items-center border border-gray-300 dark:border-transparent focus-within:border-[#00a884] transition-all">
         <input
           type="text"
           placeholder="Type a message"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-full bg-transparent text-gray-100 text-sm focus:outline-none placeholder-gray-400"
+          className="w-full bg-transparent text-gray-900 dark:text-gray-100 text-sm focus:outline-none placeholder-gray-500 dark:placeholder-gray-400"
         />
       </div>
 
@@ -158,7 +158,7 @@ export default function InputBar({ onSendMessage, onSendMedia, onSendAudio }) {
         <button
           onClick={() => setIsRecording(true)}
           title="Record voice note"
-          className="p-2.5 text-gray-400 hover:text-gray-100 hover:bg-[#2a3942] rounded-full transition-all"
+          className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
         >
           <Mic className="w-6 h-6 text-[#00a884]" />
         </button>

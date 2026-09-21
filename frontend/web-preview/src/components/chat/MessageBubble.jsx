@@ -56,15 +56,15 @@ export default function MessageBubble({
     >
       {/* Bubble Container */}
       <div
-        className={`max-w-[85%] md:max-w-[70%] rounded-xl p-3 shadow-md relative border ${
+        className={`max-w-[85%] md:max-w-[70%] rounded-xl p-3 shadow-sm relative border ${
           isUser
-            ? 'bg-[#005c4b] text-gray-100 border-[#005c4b] rounded-tr-none'
-            : 'bg-[#202c33] text-gray-100 border-[#222d34] rounded-tl-none'
+            ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111b21] dark:text-gray-100 border-[#d9fdd3] dark:border-[#005c4b] rounded-tr-none'
+            : 'bg-white dark:bg-[#202c33] text-[#111b21] dark:text-gray-100 border-gray-200 dark:border-[#222d34] rounded-tl-none'
         }`}
       >
         {/* Forwarded Tag */}
         {msg.isForwarded && (
-          <div className="flex items-center gap-1 text-[10px] text-gray-400 italic mb-1">
+          <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400 italic mb-1">
             <Forward className="w-3 h-3 text-[#00a884]" />
             <span>Forwarded</span>
           </div>
@@ -97,13 +97,13 @@ export default function MessageBubble({
                       key={idx}
                       style={{ height: `${h}%` }}
                       className={`w-1 rounded-full transition-colors ${
-                        isFilled ? 'bg-[#00a884]' : 'bg-gray-600'
+                        isFilled ? 'bg-[#00a884]' : 'bg-gray-300 dark:bg-gray-600'
                       }`}
                     />
                   );
                 })}
               </div>
-              <div className="flex justify-between text-[10px] text-gray-400 font-mono">
+              <div className="flex justify-between text-[10px] text-gray-500 dark:text-gray-400 font-mono">
                 <span>{formatAudioDuration(msg.audioDuration || 3)}</span>
                 <span className="flex items-center gap-0.5">
                   <Volume2 className="w-3 h-3 text-[#00a884]" /> Voice note
@@ -115,15 +115,15 @@ export default function MessageBubble({
 
         {/* Media Attachments (Photo / Doc) */}
         {msg.media && (
-          <div className="mb-2 rounded-lg overflow-hidden border border-gray-700">
+          <div className="mb-2 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
             {msg.media.type === 'image' ? (
               <img src={msg.media.url} alt={msg.media.name} className="max-h-60 w-full object-cover rounded" />
             ) : (
-              <div className="flex items-center gap-3 p-3 bg-[#111b21] rounded">
+              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-[#111b21] rounded">
                 <FileText className="w-8 h-8 text-[#00a884]" />
                 <div className="overflow-hidden">
-                  <p className="text-xs font-semibold text-gray-200 truncate">{msg.media.name}</p>
-                  <p className="text-[10px] text-gray-400">{msg.media.size || 'Document'}</p>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">{msg.media.name}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">{msg.media.size || 'Document'}</p>
                 </div>
               </div>
             )}
@@ -156,7 +156,7 @@ export default function MessageBubble({
         )}
 
         {/* Timestamp & Read Status Footer */}
-        <div className="flex items-center justify-end gap-1 text-[10px] text-gray-400 mt-1 select-none">
+        <div className="flex items-center justify-end gap-1 text-[10px] text-gray-500 dark:text-gray-400 mt-1 select-none">
           <span>{msg.timestamp || '11:45 AM'}</span>
           {isUser && <CheckCheck className="w-3.5 h-3.5 text-[#53bdeb]" />}
         </div>

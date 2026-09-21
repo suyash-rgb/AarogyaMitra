@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { CircleDashed, Users, MessageSquarePlus, MoreVertical, Search, Bot, MapPin, Globe, Sparkles } from 'lucide-react';
+import { CircleDashed, Users, MessageSquarePlus, MoreVertical, Search, Bot, MapPin, Globe, Sparkles, Settings as SettingsIcon } from 'lucide-react';
 import ChatListItem from './ChatListItem';
+import SettingsDrawer from '../drawers/SettingsDrawer';
 
 export default function Sidebar({
   chats,
@@ -9,12 +10,14 @@ export default function Sidebar({
   onOpenNewChat,
   onOpenStateModal,
   onOpenLanguageModal,
+  onOpenThemeModal,
   currentState,
   currentLanguageObj
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('All');
   const [showMenu, setShowMenu] = useState(false);
+  const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
 
   const filterTabs = ['All', 'Unread', 'Favorites', 'Groups'];
 
@@ -29,18 +32,33 @@ export default function Sidebar({
   });
 
   return (
-    <aside className="w-full md:w-[32%] lg:w-[30%] min-w-[320px] max-w-[450px] bg-[#111b21] flex flex-col h-full border-r border-[#222d34] select-none">
+    <aside className="w-full md:w-[32%] lg:w-[30%] min-w-[320px] max-w-[450px] bg-white dark:bg-[#111b21] flex flex-col h-full border-r border-gray-200 dark:border-[#222d34] select-none relative">
+      {/* Settings Drawer Overlay */}
+      <SettingsDrawer
+        isOpen={showSettingsDrawer}
+        onClose={() => setShowSettingsDrawer(false)}
+        onOpenThemeModal={onOpenThemeModal}
+        onOpenStateModal={onOpenStateModal}
+        onOpenLanguageModal={onOpenLanguageModal}
+        onSelectChat={onSelectChat}
+        currentState={currentState}
+        currentLanguageObj={currentLanguageObj}
+      />
+
       {/* Sidebar Top Header */}
-      <div className="bg-[#202c33] px-4 py-3 flex items-center justify-between border-b border-gray-700">
-        <div className="flex items-center gap-3">
+      <div className="bg-gray-100 dark:bg-[#202c33] px-4 py-3 flex items-center justify-between border-b border-gray-200 dark:border-gray-700">
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => setShowSettingsDrawer(true)}
+          title="Open Settings"
+        >
           <img
             src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
             alt="Leo (You)"
-            className="w-10 h-10 rounded-full object-cover border-2 border-[#00a884] cursor-pointer"
-            title="Leo (You)"
+            className="w-10 h-10 rounded-full object-cover border-2 border-[#00a884]"
           />
           <div>
-            <h3 className="font-semibold text-sm text-gray-100 leading-tight">Leo (You)</h3>
+            <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100 leading-tight">Leo (You)</h3>
             <span className="text-[10px] text-[#00a884] font-medium flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-[#00a884] animate-ping" />
               Online • Healthcare Active
@@ -49,30 +67,30 @@ export default function Sidebar({
         </div>
 
         {/* Action Header Icons */}
-        <div className="flex items-center gap-2 text-gray-400">
+        <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
           <button
             onClick={() => onSelectChat('meta-ai')}
             title="Ask Meta AI"
-            className="p-2 hover:text-[#00a884] hover:bg-[#2a3942] rounded-full transition-all"
+            className="p-2 hover:text-[#00a884] hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
           >
-            <Sparkles className="w-5 h-5 text-blue-400" />
+            <Sparkles className="w-5 h-5 text-blue-500" />
           </button>
           <button
             title="Status / Updates"
-            className="p-2 hover:text-gray-100 hover:bg-[#2a3942] rounded-full transition-all"
+            className="p-2 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
           >
             <CircleDashed className="w-5 h-5" />
           </button>
           <button
             title="Communities"
-            className="p-2 hover:text-gray-100 hover:bg-[#2a3942] rounded-full transition-all"
+            className="p-2 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
           >
             <Users className="w-5 h-5" />
           </button>
           <button
             onClick={onOpenNewChat}
             title="New Chat"
-            className="p-2 hover:text-gray-100 hover:bg-[#2a3942] rounded-full transition-all"
+            className="p-2 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
           >
             <MessageSquarePlus className="w-5 h-5 text-[#00a884]" />
           </button>
@@ -82,19 +100,29 @@ export default function Sidebar({
             <button
               onClick={() => setShowMenu((prev) => !prev)}
               title="Menu"
-              className="p-2 hover:text-gray-100 hover:bg-[#2a3942] rounded-full transition-all"
+              className="p-2 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
             >
               <MoreVertical className="w-5 h-5" />
             </button>
 
             {showMenu && (
-              <div className="absolute right-0 top-10 z-30 w-52 bg-[#233138] border border-gray-700 rounded-xl shadow-2xl py-1 text-xs text-gray-200">
+              <div className="absolute right-0 top-10 z-30 w-52 bg-white dark:bg-[#233138] border border-gray-200 dark:border-gray-700 rounded-xl shadow-2xl py-1 text-xs text-gray-800 dark:text-gray-200">
+                <button
+                  onClick={() => {
+                    setShowSettingsDrawer(true);
+                    setShowMenu(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#182229] transition-all text-left font-medium"
+                >
+                  <SettingsIcon className="w-4 h-4 text-[#00a884]" />
+                  <span>Settings</span>
+                </button>
                 <button
                   onClick={() => {
                     onOpenStateModal();
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#182229] transition-all text-left"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#182229] transition-all text-left"
                 >
                   <MapPin className="w-4 h-4 text-[#00a884]" />
                   <span>State: {currentState}</span>
@@ -104,7 +132,7 @@ export default function Sidebar({
                     onOpenLanguageModal();
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#182229] transition-all text-left"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#182229] transition-all text-left"
                 >
                   <Globe className="w-4 h-4 text-[#00a884]" />
                   <span>Language: {currentLanguageObj?.name || 'English'}</span>
@@ -114,7 +142,7 @@ export default function Sidebar({
                     onSelectChat('ai-bot');
                     setShowMenu(false);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-[#182229] transition-all text-left border-t border-gray-700 font-semibold text-[#00a884]"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#182229] transition-all text-left border-t border-gray-100 dark:border-gray-700 font-semibold text-[#00a884]"
                 >
                   <Bot className="w-4 h-4" />
                   <span>AarogyaMitra Bot</span>
@@ -126,10 +154,10 @@ export default function Sidebar({
       </div>
 
       {/* State & Language Quick Badges Bar */}
-      <div className="bg-[#111b21] px-3 py-2 flex items-center justify-between border-b border-[#222d34] text-xs">
+      <div className="bg-gray-50 dark:bg-[#111b21] px-3 py-2 flex items-center justify-between border-b border-gray-200 dark:border-[#222d34] text-xs">
         <button
           onClick={onOpenStateModal}
-          className="flex items-center gap-1.5 bg-[#202c33] hover:bg-[#2a3942] text-gray-200 px-3 py-1 rounded-full border border-gray-700 transition-all font-medium"
+          className="flex items-center gap-1.5 bg-white dark:bg-[#202c33] hover:bg-gray-200 dark:hover:bg-[#2a3942] text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 transition-all font-medium shadow-xs"
         >
           <MapPin className="w-3.5 h-3.5 text-[#00a884]" />
           <span className="truncate max-w-[120px]">{currentState}</span>
@@ -137,7 +165,7 @@ export default function Sidebar({
 
         <button
           onClick={onOpenLanguageModal}
-          className="flex items-center gap-1.5 bg-[#202c33] hover:bg-[#2a3942] text-gray-200 px-3 py-1 rounded-full border border-gray-700 transition-all font-medium"
+          className="flex items-center gap-1.5 bg-white dark:bg-[#202c33] hover:bg-gray-200 dark:hover:bg-[#2a3942] text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 transition-all font-medium shadow-xs"
         >
           <Globe className="w-3.5 h-3.5 text-[#00a884]" />
           <span>{currentLanguageObj?.native || 'English'}</span>
@@ -145,7 +173,7 @@ export default function Sidebar({
       </div>
 
       {/* Search Input Bar */}
-      <div className="p-2.5 bg-[#111b21]">
+      <div className="p-2.5 bg-white dark:bg-[#111b21]">
         <div className="relative">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
           <input
@@ -153,13 +181,13 @@ export default function Sidebar({
             placeholder="Search or start new chat"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-[#202c33] text-gray-100 text-sm pl-9 pr-4 py-1.5 rounded-lg border border-transparent focus:outline-none focus:border-[#00a884] placeholder-gray-400"
+            className="w-full bg-gray-100 dark:bg-[#202c33] text-gray-900 dark:text-gray-100 text-sm pl-9 pr-4 py-1.5 rounded-lg border border-transparent focus:outline-none focus:border-[#00a884] placeholder-gray-500 dark:placeholder-gray-400"
           />
         </div>
       </div>
 
       {/* Quick Filter Tabs */}
-      <div className="flex gap-2 px-3 pb-2 border-b border-[#222d34] text-xs">
+      <div className="flex gap-2 px-3 pb-2 border-b border-gray-200 dark:border-[#222d34] text-xs">
         {filterTabs.map((tab) => {
           const isActive = activeTab === tab;
           return (
@@ -169,7 +197,7 @@ export default function Sidebar({
               className={`px-3 py-1 rounded-full font-semibold transition-all ${
                 isActive
                   ? 'bg-[#00a884]/20 text-[#00a884] border border-[#00a884]/40'
-                  : 'bg-[#202c33] text-gray-400 hover:text-gray-200 hover:bg-[#2a3942]'
+                  : 'bg-gray-100 dark:bg-[#202c33] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#2a3942]'
               }`}
             >
               {tab}
@@ -179,7 +207,7 @@ export default function Sidebar({
       </div>
 
       {/* Chat List */}
-      <div className="flex-1 overflow-y-auto divide-y divide-[#222d34]/40 scrollbar-thin scrollbar-thumb-gray-700">
+      <div className="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-[#222d34]/40 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-700">
         {filteredChats.map((c) => (
           <ChatListItem
             key={c.id}

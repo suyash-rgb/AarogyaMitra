@@ -1,0 +1,14 @@
+feat: light/dark mode
+
+implemented and verified complete support for Light Mode, Dark Mode, and System Default theme preferences in the React Web SPA, complete with WhatsApp Web settings drawer navigation.
+
+ThemeContext: Created ThemeContext.jsx supporting 'light', 'dark', and 'system' modes with localStorage persistence and automatic system color scheme detection.
+Design System & Theme Tokens: Defined CSS custom variables and theme classes across index.css and UI components (Sidebar, ChatArea, MessageBubble, InputBar, ChatListItem, WhatsAppLayout) for authentic WhatsApp Web Light and Dark mode styling.
+Settings Navigation Drawer: Implemented SettingsDrawer.jsx providing a sliding drawer in the sidebar pane with multi-level navigation:
+Settings -> Chats -> Theme
+Back button ← navigation returns sequentially to Settings and back to the main Chats list.
+Theme Modal: Implemented ThemeModal.jsx featuring radio button selections for System default, Light, and Dark, instantly applying theme updates.
+
+Configured tailwind.config.js: Added darkMode: 'class' so Tailwind dynamically responds to .dark class toggles at runtime.
+
+
