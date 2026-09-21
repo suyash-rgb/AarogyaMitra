@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { X } from 'lucide-react-native';
-import { styles } from '../../constants/styles';
+import { useStyles } from '../../constants/styles';
+import { useTheme } from '../../context/ThemeContext';
 
 const fallbackStates = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 
@@ -14,6 +15,8 @@ const fallbackStates = [
 ];
 
 export const StatePickerModal = ({ visible, onClose, availableStates, userState, onSelectState }) => {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const displayStates = availableStates.length > 0 ? availableStates : fallbackStates;
 
   return (
@@ -32,7 +35,7 @@ export const StatePickerModal = ({ visible, onClose, availableStates, userState,
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Select Your State</Text>
             <TouchableOpacity onPress={onClose}>
-              <X size={24} color="#111B21" />
+              <X size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.langList}>

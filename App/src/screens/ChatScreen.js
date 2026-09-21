@@ -7,7 +7,8 @@ import {
   Platform,
   ActivityIndicator
 } from 'react-native';
-import { styles } from '../constants/styles';
+import { useStyles } from '../constants/styles';
+import { useTheme } from '../context/ThemeContext';
 import { ChatHeader } from '../components/chat/ChatHeader';
 import { ChatInputBar } from '../components/chat/ChatInputBar';
 import { ChatMessageBubble } from '../components/chat/ChatMessageBubble';
@@ -25,6 +26,9 @@ export default function ChatScreen({ chat, allChats = [], goBack, openProfile, o
   const [messages, setMessages] = useState(chat.messages || []);
   const [inputText, setInputText] = useState('');
   const scrollViewRef = useRef(null);
+
+  const styles = useStyles();
+  const { colors } = useTheme();
 
   const {
     toastText,
@@ -118,7 +122,7 @@ export default function ChatScreen({ chat, allChats = [], goBack, openProfile, o
           {isTyping && (
             <View style={[styles.msgRow, styles.msgRowLeft]}>
               <View style={[styles.bubble, styles.bubbleOther, styles.typingBubble]}>
-                <ActivityIndicator size="small" color="#075E54" />
+                <ActivityIndicator size="small" color={colors.accent} />
                 <Text style={styles.typingText}>typing...</Text>
               </View>
             </View>

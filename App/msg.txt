@@ -1,0 +1,16 @@
+feat: Dark mode 
+
+Created ThemeContext.js to manage the global theme state (light, dark, or system). The state is persisted using AsyncStorage and defaults to the device's Appearance scheme.
+
+Defined comprehensive, WhatsApp-accurate color dictionaries (lightColors and darkColors) in theme.js. Crucial tokens like headerBg, surface, bubbleMe, and textInverse were meticulously mapped to replicate the authentic UI.
+
+Dynamic Styles Refactoring:
+ - Converted all static StyleSheet.create exports (e.g., in styles.js, profileStyles.js, schemeStyles.js) into React hooks (e.g., useStyles()).
+ - Replaced hundreds of hardcoded hex values across all components and screens with dynamic colors.<token> references.
+
+Settings Navigation Flow:
+- Implemented the WhatsApp 3-dots dropdown menu in the ChatListScreen header.
+- Created SettingsScreen and ChatsSettingsScreen to replicate the authentic WhatsApp settings navigation hierarchy.
+- Built ThemePickerModal to allow users to manually override the system theme.
+
+Contrast & Accessibility Fixes: Addressed contrast edge cases, such as ensuring text on the dark headerBg remains light in both themes, and mapping action button colors to lighter shades (e.g., #53BDEB) in dark mode for readability against dark bubbles.

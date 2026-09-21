@@ -2,9 +2,12 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Play, Pause, Mic } from 'lucide-react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { styles } from '../constants/styles';
+import { useStyles } from '../constants/styles';
+import { useTheme } from '../context/ThemeContext';
 
 const AudioMessage = ({ uri }) => {
+  const styles = useStyles();
+  const { colors } = useTheme();
   const player = useAudioPlayer(uri);
   const status = useAudioPlayerStatus(player);
 
@@ -33,7 +36,7 @@ const AudioMessage = ({ uri }) => {
   return (
     <View style={styles.audioContainer}>
       <TouchableOpacity onPress={togglePlayback} style={styles.audioPlayButton}>
-        {status.playing ? <Pause size={24} color="#00a884" /> : <Play size={24} color="#00a884" />}
+        {status.playing ? <Pause size={24} color={colors.accent} /> : <Play size={24} color={colors.accent} />}
       </TouchableOpacity>
       
       <View style={styles.audioProgressTrack}>
@@ -45,7 +48,7 @@ const AudioMessage = ({ uri }) => {
         {formatTime(status.currentTime || status.duration)}
       </Text>
       
-      <Mic size={16} color="#00A884" style={{ marginLeft: 6 }} />
+      <Mic size={16} color={colors.accent} style={{ marginLeft: 6 }} />
     </View>
   );
 };

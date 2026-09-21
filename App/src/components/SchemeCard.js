@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { schemeCardStyles as styles } from '../constants/schemeStyles';
+import { useSchemeCardStyles } from '../constants/schemeStyles';
 import { SchemeDetailsModal } from './SchemeDetailsModal';
 
+import { useTheme } from '../context/ThemeContext';
+
 export const SchemeCard = ({ scheme }) => {
+  const { colors } = useTheme();
+  const styles = useSchemeCardStyles();
   const [modalVisible, setModalVisible] = useState(false);
 
   return (
@@ -34,12 +38,12 @@ export const SchemeCard = ({ scheme }) => {
             marginTop: 12, 
             paddingVertical: 8, 
             paddingHorizontal: 16, 
-            backgroundColor: '#128C7E', 
+            backgroundColor: colors.accent, 
             borderRadius: 8, 
             alignSelf: 'flex-start' 
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>
+          <Text style={{ color: colors.textInverse, fontWeight: 'bold', fontSize: 13 }}>
             View Details
           </Text>
         </TouchableOpacity>

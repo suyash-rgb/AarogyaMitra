@@ -1,22 +1,31 @@
 import { StyleSheet, Platform, StatusBar } from 'react-native';
 
-export const styles = StyleSheet.create({
+import { useTheme } from '../context/ThemeContext';
+import { lightColors, darkColors } from './theme';
+import { useMemo } from 'react';
+
+export const useStyles = () => {
+  const { activeTheme } = useTheme();
+  const colors = activeTheme === 'dark' ? darkColors : lightColors;
+
+  return useMemo(() => {
+    return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#075E54', // Matches iOS status bar area
+    backgroundColor: colors.headerBg, // Matches iOS status bar area
   },
   keyboardView: {
     flex: 1,
   },
   header: {
     height: 60,
-    backgroundColor: '#075E54',
+    backgroundColor: colors.headerBg,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     justifyContent: 'space-between',
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -36,7 +45,7 @@ export const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     marginRight: 10,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     resizeMode: 'contain',
   },
   headerTitleContainer: {
@@ -44,12 +53,12 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerName: {
-    color: '#ffffff',
+    color: colors.textInverse,
     fontWeight: 'bold',
     fontSize: 18,
   },
   headerStatus: {
-    color: '#ffffff',
+    color: colors.textInverse,
     fontSize: 13,
     opacity: 0.8,
   },
@@ -67,7 +76,7 @@ export const styles = StyleSheet.create({
   },
   chatBackground: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#E5DDD5', // WhatsApp classic light background
+    backgroundColor: colors.background, // WhatsApp classic light background
   },
   messageArea: {
     flex: 1,
@@ -94,22 +103,22 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     position: 'relative',
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
     elevation: 1,
   },
   bubbleMe: {
-    backgroundColor: '#DCF8C6',
+    backgroundColor: colors.bubbleMe,
     borderTopRightRadius: 0,
   },
   bubbleOther: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 0,
   },
   bubbleText: {
-    color: '#000000',
+    color: colors.text,
     fontSize: 15,
     lineHeight: 20,
   },
@@ -120,7 +129,7 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
   bubbleTime: {
-    color: '#8696a0',
+    color: colors.textSecondary,
     fontSize: 11,
     marginRight: 4,
   },
@@ -133,7 +142,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   typingText: {
-    color: '#8696a0',
+    color: colors.textSecondary,
     fontSize: 14,
     marginLeft: 8,
     fontStyle: 'italic',
@@ -147,7 +156,7 @@ export const styles = StyleSheet.create({
   documentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: colors.border,
     padding: 8,
     borderRadius: 8,
     marginBottom: 4,
@@ -164,7 +173,7 @@ export const styles = StyleSheet.create({
   documentName: {
     flex: 1,
     fontSize: 14,
-    color: '#111B21',
+    color: colors.text,
     fontWeight: '500'
   },
   audioContainer: {
@@ -181,7 +190,7 @@ export const styles = StyleSheet.create({
   audioProgressTrack: {
     flex: 1,
     height: 4,
-    backgroundColor: 'rgba(0,0,0,0.15)',
+    backgroundColor: colors.border,
     borderRadius: 2,
     marginRight: 10,
     position: 'relative',
@@ -189,20 +198,20 @@ export const styles = StyleSheet.create({
   },
   audioProgressBar: {
     height: 4,
-    backgroundColor: '#00A884',
+    backgroundColor: colors.accent,
     borderRadius: 2,
   },
   audioProgressDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#00A884',
+    backgroundColor: colors.accent,
     position: 'absolute',
     marginLeft: -6,
   },
   audioDuration: {
     fontSize: 12,
-    color: '#667781',
+    color: colors.textSecondary,
     minWidth: 36,
     textAlign: 'right',
   },
@@ -211,13 +220,13 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: 8,
     paddingVertical: 8,
-    backgroundColor: '#E5DDD5', // Match chat background to look transparent
+    backgroundColor: colors.background, // Match chat background to look transparent
   },
   inputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     minHeight: 48,
     marginRight: 8,
@@ -232,7 +241,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     minHeight: 48,
     marginRight: 8,
@@ -242,12 +251,12 @@ export const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#EA0038',
+    backgroundColor: colors.error,
     marginRight: 6,
   },
   recordingTimerText: {
     fontSize: 16,
-    color: '#EA0038',
+    color: colors.error,
     fontWeight: '600',
     fontVariant: ['tabular-nums'],
   },
@@ -260,7 +269,7 @@ export const styles = StyleSheet.create({
   },
   waveformBar: {
     width: 2.5,
-    backgroundColor: '#8696a0',
+    backgroundColor: colors.textSecondary,
     marginHorizontal: 1.5,
     borderRadius: 1.5,
   },
@@ -268,7 +277,7 @@ export const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#FFEAEA',
+    backgroundColor: colors.doctorBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
@@ -277,7 +286,7 @@ export const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#00A884',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -288,7 +297,7 @@ export const styles = StyleSheet.create({
   chatTextInput: {
     flex: 1,
     fontSize: 16,
-    color: '#000',
+    color: colors.text,
     paddingTop: 12,
     paddingBottom: 12,
     maxHeight: 120,
@@ -301,10 +310,10 @@ export const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#075E54', // WhatsApp Green Button
+    backgroundColor: colors.headerBg, // WhatsApp Green Button
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
@@ -313,14 +322,14 @@ export const styles = StyleSheet.create({
   // --- Chat List Styles ---
   homeHeader: {
     height: 60,
-    backgroundColor: '#075E54',
+    backgroundColor: colors.headerBg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
   },
   homeTitle: {
-    color: '#fff',
+    color: colors.textInverse,
     fontSize: 20,
     fontWeight: 'bold',
   },
@@ -330,7 +339,7 @@ export const styles = StyleSheet.create({
   },
   homeTabs: {
     flexDirection: 'row',
-    backgroundColor: '#075E54',
+    backgroundColor: colors.headerBg,
   },
   tabItem: {
     flex: 1,
@@ -339,36 +348,36 @@ export const styles = StyleSheet.create({
   },
   activeTab: {
     borderBottomWidth: 3,
-    borderBottomColor: '#fff',
+    borderBottomColor: colors.surface,
   },
   tabText: {
-    color: 'rgba(255,255,255,0.7)',
+    color: colors.textSecondary,
     fontSize: 15,
     fontWeight: 'bold',
   },
   activeTabText: {
-    color: '#fff',
+    color: colors.textInverse,
     fontSize: 15,
     fontWeight: 'bold',
   },
   chatListContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
   },
   chatListItem: {
     flexDirection: 'row',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f2f2f2',
+    borderBottomColor: colors.border,
   },
   chatListAvatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
     marginRight: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     resizeMode: 'contain',
     borderWidth: 1,
-    borderColor: '#E9EDEF',
+    borderColor: colors.border,
   },
   chatListDetails: {
     flex: 1,
@@ -383,18 +392,18 @@ export const styles = StyleSheet.create({
   chatListName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111B21',
+    color: colors.text,
   },
   chatListTime: {
     fontSize: 12,
-    color: '#8696a0',
+    color: colors.textSecondary,
   },
   chatListLastMessage: {
     fontSize: 14,
-    color: '#8696a0',
+    color: colors.textSecondary,
   },
   unreadBadge: {
-    backgroundColor: '#00A884',
+    backgroundColor: colors.accent,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -404,25 +413,25 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   unreadBadgeText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 10,
     fontWeight: 'bold',
   },
   actionButtonsContainer: {
     marginTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#f2f2f2',
+    borderTopColor: colors.border,
     paddingTop: 4,
     minWidth: 200,
   },
   actionButton: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f2f2f2',
+    borderBottomColor: colors.border,
     alignItems: 'center',
   },
   actionButtonText: {
-    color: '#027EB5',
+    color: colors.buttonText,
     fontSize: 15,
     fontWeight: '500',
   },
@@ -432,15 +441,15 @@ export const styles = StyleSheet.create({
     paddingRight: 10,
   },
   doctorCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E9EDEF',
+    borderColor: colors.border,
     padding: 12,
     marginRight: 12,
     width: 200,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -451,35 +460,35 @@ export const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
     marginBottom: 8,
-    backgroundColor: '#F0F2F5',
+    backgroundColor: colors.doctorBg,
   },
   doctorName: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#111B21',
+    color: colors.text,
     textAlign: 'center',
   },
   doctorSpecialty: {
     fontSize: 12,
-    color: '#00A884', // Green highlight for specialty
+    color: colors.accent, // Green highlight for specialty
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 2,
   },
   doctorSub: {
     fontSize: 11,
-    color: '#667781',
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: 2,
   },
   doctorRating: {
     fontSize: 12,
-    color: '#FFAD0A',
+    color: colors.accent,
     fontWeight: 'bold',
     marginTop: 4,
   },
   bookDocButton: {
-    backgroundColor: '#00A884',
+    backgroundColor: colors.accent,
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 20,
@@ -488,20 +497,20 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bookDocButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 13,
     fontWeight: 'bold',
   },
   // --- Booking Ticket Styles ---
   ticketContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#00A884',
+    borderColor: colors.accent,
     padding: 12,
     width: 240,
     marginVertical: 4,
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -509,7 +518,7 @@ export const styles = StyleSheet.create({
   },
   ticketHeader: {
     borderBottomWidth: 1,
-    borderBottomColor: '#E9EDEF',
+    borderBottomColor: colors.border,
     paddingBottom: 6,
     marginBottom: 8,
     flexDirection: 'row',
@@ -519,16 +528,16 @@ export const styles = StyleSheet.create({
   ticketTitle: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#00A884',
+    color: colors.accent,
   },
   ticketBadge: {
-    backgroundColor: '#E7F7F4',
+    backgroundColor: colors.accentLight,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
   },
   ticketBadgeText: {
-    color: '#00A884',
+    color: colors.accent,
     fontSize: 10,
     fontWeight: 'bold',
   },
@@ -539,21 +548,21 @@ export const styles = StyleSheet.create({
   },
   ticketLabel: {
     fontSize: 12,
-    color: '#667781',
+    color: colors.textSecondary,
   },
   ticketValue: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#111B21',
+    color: colors.text,
   },
   // --- Language Selector Modal Styles ---
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalContentContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingHorizontal: 20,
@@ -566,14 +575,14 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F2F5',
+    borderBottomColor: colors.doctorBg,
     paddingBottom: 12,
     marginBottom: 8,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111B21',
+    color: colors.text,
   },
   langList: {
     marginVertical: 8,
@@ -584,45 +593,52 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F2F5',
+    borderBottomColor: colors.doctorBg,
   },
   langOptionActive: {
-    backgroundColor: '#E7F7F4',
+    backgroundColor: colors.accentLight,
     borderRadius: 8,
     paddingHorizontal: 8,
   },
   langOptionText: {
     fontSize: 16,
-    color: '#111B21',
+    color: colors.text,
   },
   langOptionNative: {
     fontSize: 15,
-    color: '#667781',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
-});
+        });
+  }, [colors]);
+};
 
-export const hospitalCardStyles = StyleSheet.create({
+export const useHospitalCardStyles = () => {
+  const { activeTheme } = useTheme();
+  const colors = activeTheme === 'dark' ? darkColors : lightColors;
+
+  return useMemo(() => {
+    return StyleSheet.create({
   card: {
     width: 270,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     marginRight: 12,
     marginVertical: 4,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
   },
   previewContainer: {
     width: '100%',
     height: 120,
     position: 'relative',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.doctorBg,
   },
   mapImage: {
     width: '100%',
@@ -637,13 +653,13 @@ export const hospitalCardStyles = StyleSheet.create({
     borderRadius: 4,
   },
   badgeTrauma: {
-    backgroundColor: '#DC2626',
+    backgroundColor: colors.dangerBadge,
   },
   badgeFacility: {
-    backgroundColor: '#0284C7',
+    backgroundColor: colors.facilityBadge,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 10,
     fontWeight: 'bold',
     letterSpacing: 0.5,
@@ -654,22 +670,22 @@ export const hospitalCardStyles = StyleSheet.create({
   title: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: colors.text,
     marginBottom: 2,
   },
   subtitle: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textSecondary,
     fontWeight: '500',
     marginBottom: 4,
   },
   services: {
     fontSize: 11,
-    color: '#475569',
+    color: colors.textSecondary,
     marginBottom: 10,
   },
   actionButton: {
-    backgroundColor: '#059669',
+    backgroundColor: colors.accent,
     paddingVertical: 9,
     paddingHorizontal: 12,
     borderRadius: 8,
@@ -679,8 +695,10 @@ export const hospitalCardStyles = StyleSheet.create({
     marginTop: 4,
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: '600',
     fontSize: 13,
   },
-});
+    });
+  }, [colors]);
+};

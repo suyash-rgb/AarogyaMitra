@@ -1,18 +1,27 @@
 import { StyleSheet, Platform, StatusBar } from 'react-native';
 
-export const styles = StyleSheet.create({
+import { useTheme } from '../context/ThemeContext';
+import { lightColors, darkColors } from './theme';
+import { useMemo } from 'react';
+
+export const useStyles = () => {
+  const { activeTheme } = useTheme();
+  const colors = activeTheme === 'dark' ? darkColors : lightColors;
+
+  return useMemo(() => {
+    return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0F2F5', // Light grey background for spacing
+    backgroundColor: colors.doctorBg, // Light grey background for spacing
   },
   header: {
     height: 60,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E9EDEF',
+    borderBottomColor: colors.border,
   },
   headerButton: {
     padding: 10,
@@ -28,21 +37,21 @@ export const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     marginRight: 10,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#E9EDEF',
+    borderColor: colors.border,
     resizeMode: 'contain',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '500',
-    color: '#111B21',
+    color: colors.text,
   },
   scrollContent: {
     flex: 1,
   },
   sectionCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     marginTop: 8,
     paddingVertical: 4,
   },
@@ -54,9 +63,9 @@ export const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#E9EDEF',
+    borderColor: colors.border,
     resizeMode: 'contain',
   },
   heroNameContainer: {
@@ -67,26 +76,26 @@ export const styles = StyleSheet.create({
   heroName: {
     fontSize: 22,
     fontWeight: '400',
-    color: '#111B21',
+    color: colors.text,
     textAlign: 'center',
   },
   heroPhone: {
     fontSize: 16,
-    color: '#667781',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   shareButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#F0F2F5',
+    backgroundColor: colors.doctorBg,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 24,
   },
   shareText: {
     fontSize: 14,
-    color: '#111B21',
+    color: colors.text,
     marginTop: 8,
   },
   listItem: {
@@ -104,12 +113,12 @@ export const styles = StyleSheet.create({
   },
   listTextPrimary: {
     fontSize: 16,
-    color: '#111B21',
+    color: colors.text,
     lineHeight: 22,
   },
   listTextSecondary: {
     fontSize: 14,
-    color: '#667781',
+    color: colors.textSecondary,
     marginTop: 2,
     lineHeight: 20,
   },
@@ -119,7 +128,7 @@ export const styles = StyleSheet.create({
   },
   sectionHeader: {
     fontSize: 14,
-    color: '#667781',
+    color: colors.textSecondary,
     marginLeft: 20,
     marginTop: 16,
     marginBottom: 4,
@@ -129,7 +138,7 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#00A884',
+    backgroundColor: colors.accent,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -143,7 +152,9 @@ export const styles = StyleSheet.create({
   fullScreenAvatar: {
     width: '100%',
     aspectRatio: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     resizeMode: 'contain',
   }
-});
+    });
+  }, [colors]);
+};

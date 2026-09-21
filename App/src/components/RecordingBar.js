@@ -2,9 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Trash2, Send } from 'lucide-react-native';
 import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio';
-import { styles } from '../constants/styles';
+import { useStyles } from '../constants/styles';
+import { useTheme } from '../context/ThemeContext';
 
 export default function RecordingBar({ onSend, onCancel }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
   const [isPaused, setIsPaused] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const recordingTimer = useRef(null);
@@ -106,12 +110,12 @@ export default function RecordingBar({ onSend, onCancel }) {
     <>
       {/* Left Red Trash Button */}
       <TouchableOpacity style={styles.trashCircleButton} onPress={cancelRecording}>
-        <Trash2 size={20} color="#EA0038" />
+        <Trash2 size={20} color={colors.error} />
       </TouchableOpacity>
 
       {/* Middle Pill */}
       <View style={styles.recordingPill}>
-        <View style={[styles.redDot, isPaused && { backgroundColor: '#8696a0' }]} />
+        <View style={[styles.redDot, isPaused && { backgroundColor: colors.textSecondary }]} />
         <Text style={styles.recordingTimerText}>
           {formatRecordingTime(recordingDuration)}
         </Text>
@@ -124,7 +128,7 @@ export default function RecordingBar({ onSend, onCancel }) {
               style={[
                 styles.waveformBar, 
                 { height: 8 + h * 3 },
-                isPaused && { backgroundColor: '#c0c0c0' }
+                isPaused && { backgroundColor: colors.border }
               ]} 
             />
           ))}
@@ -132,7 +136,7 @@ export default function RecordingBar({ onSend, onCancel }) {
 
         {/* Pause Button */}
         <TouchableOpacity style={styles.pauseIconButton} onPress={togglePause}>
-          <Text style={{ color: '#00A884', fontWeight: '700', fontSize: 13 }}>
+          <Text style={{ color: colors.accent, fontWeight: '700', fontSize: 13 }}>
             {isPaused ? 'RESUME' : 'PAUSE'}
           </Text>
         </TouchableOpacity>
@@ -140,7 +144,7 @@ export default function RecordingBar({ onSend, onCancel }) {
 
       {/* Right Green Send Button */}
       <TouchableOpacity style={styles.sendCircleButton} onPress={stopAndSendRecording}>
-        <Send size={20} color="#fff" />
+        <Send size={20} color={colors.textInverse} />
       </TouchableOpacity>
     </>
   );

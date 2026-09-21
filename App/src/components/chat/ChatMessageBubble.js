@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image, Pressable, ActivityIndicator } from 'react-native';
 import { CheckCheck, FileText, User, CornerUpRight, Volume2, VolumeX } from 'lucide-react-native';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { styles } from '../../constants/styles';
+import { useStyles } from '../../constants/styles';
+import { useTheme } from '../../context/ThemeContext';
 import AudioMessage from '../AudioMessage';
 import { HospitalCard } from '../HospitalCard';
 import { SchemeCard } from '../SchemeCard';
@@ -17,6 +18,9 @@ export const ChatMessageBubble = ({
   onBookDoctor,
   onLongPressMessage
 }) => {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
   return (
     <View
       style={[
@@ -36,8 +40,8 @@ export const ChatMessageBubble = ({
       >
         {msg.isForwarded && (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-            <CornerUpRight size={12} color="#667781" style={{ marginRight: 4 }} />
-            <Text style={{ fontSize: 11, color: '#667781', fontStyle: 'italic', fontWeight: '500' }}>Forwarded</Text>
+            <CornerUpRight size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+            <Text style={{ fontSize: 11, color: colors.textSecondary, fontStyle: 'italic', fontWeight: '500' }}>Forwarded</Text>
           </View>
         )}
 
@@ -47,7 +51,7 @@ export const ChatMessageBubble = ({
         {msg.type === 'document' && (
           <View style={styles.documentContainer}>
             <View style={styles.documentIconBox}>
-              <FileText size={20} color="#fff" />
+              <FileText size={20} color={colors.textInverse} />
             </View>
             <Text style={styles.documentName} numberOfLines={1}>{msg.name}</Text>
           </View>
@@ -80,11 +84,11 @@ export const ChatMessageBubble = ({
             </View>
             <View style={styles.ticketRow}>
               <Text style={styles.ticketLabel}>ABHA Token:</Text>
-              <Text style={[styles.ticketValue, { fontWeight: '600', color: '#128C7E' }]}>ABHA-9182-4412-0091</Text>
+              <Text style={[styles.ticketValue, { fontWeight: '600', color: colors.accent }]}>ABHA-9182-4412-0091</Text>
             </View>
             <View style={styles.ticketRow}>
               <Text style={styles.ticketLabel}>Status:</Text>
-              <Text style={[styles.ticketValue, { color: '#00A884' }]}>Confirmed (Token Generated)</Text>
+              <Text style={[styles.ticketValue, { color: colors.accent }]}>Confirmed (Token Generated)</Text>
             </View>
           </View>
         )}
@@ -138,7 +142,7 @@ export const ChatMessageBubble = ({
           {msg.carouselItems.map((doc) => (
             <View key={doc.id} style={styles.doctorCard}>
               <View style={[styles.doctorImage, { justifyContent: 'center', alignItems: 'center' }]}>
-                <User size={30} color="#8696a0" />
+                <User size={30} color={colors.iconColor} />
               </View>
               <Text style={styles.doctorName}>{doc.name}</Text>
               <Text style={styles.doctorSpecialty}>{doc.specialty}</Text>

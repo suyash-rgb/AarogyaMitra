@@ -2,9 +2,10 @@ import React from 'react';
 import { View, Text, Image, TouchableOpacity, Pressable } from 'react-native';
 import { Navigation } from 'lucide-react-native';
 import { openDirectionsInMaps } from '../utils/navigation';
-import { hospitalCardStyles as styles } from '../constants/styles';
+import { useHospitalCardStyles } from '../constants/styles';
 
 export const HospitalCard = ({ hospital }) => {
+  const styles = useHospitalCardStyles();
   const handleNavigate = () => {
     openDirectionsInMaps({
       latitude: hospital.lat,

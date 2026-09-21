@@ -6,13 +6,27 @@ import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
 import { initialChats } from './src/constants/mockData';
-import { styles } from './src/constants/styles';
+import { useStyles } from './src/constants/styles';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import ProfileScreen from './src/screens/ProfileScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import ChatListScreen from './src/screens/ChatListScreen';
+import SettingsScreen from './src/screens/SettingsScreen';
+import ChatsSettingsScreen from './src/screens/ChatsSettingsScreen';
 import { getUserPersona } from './src/utils/userSession';
 
 export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}
+
+function AppContent() {
+  const styles = useStyles();
+  const { activeTheme } = useTheme();
+
   const [currentScreen, setCurrentScreen] = useState('chatList');
   const [activeChat, setActiveChat] = useState(null);
   const [chats, setChats] = useState(initialChats);
@@ -65,6 +79,7 @@ export default function App() {
         <ChatListScreen 
           chats={chats} 
           onSelectChat={handleSelectChat} 
+          openSettings={() => setCurrentScreen('settings')}
         />
       );
     }
@@ -93,12 +108,30 @@ export default function App() {
         />
       );
     }
+
+    if (currentScreen === 'settings') {
+      return (
+        <SettingsScreen
+          userPersona={userPersona}
+          goBack={() => setCurrentScreen('chatList')}
+          openChatsSettings={() => setCurrentScreen('chatsSettings')}
+        />
+      );
+    }
+
+    if (currentScreen === 'chatsSettings') {
+      return (
+        <ChatsSettingsScreen
+          goBack={() => setCurrentScreen('settings')}
+        />
+      );
+    }
   };
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        <StatusBar style="light" backgroundColor="#054c44" />
+        <StatusBar style={activeTheme === 'dark' ? "light" : "dark"} backgroundColor={activeTheme === 'dark' ? "#111B21" : "#054c44"} />
         {renderScreen()}
       </SafeAreaView>
     </SafeAreaProvider>

@@ -1,5 +1,6 @@
 import React from 'react';
-import { styles } from '../constants/profileStyles';
+import { useStyles } from '../constants/profileStyles';
+import { useTheme } from '../context/ThemeContext';
 import {
   View,
   Text,
@@ -29,10 +30,16 @@ import {
   UserRoundPlus,
   Ban,
   BadgeCheck,
-  ThumbsDown
+  ThumbsDown,
+  Search,
+  Music,
+  Timer
 } from 'lucide-react-native';
 
-export default function Profile({ activeChat, goBack }) {
+export default function ProfileScreen({ activeChat, goBack }) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
   const [chatLock, setChatLock] = React.useState(false);
   const [translate, setTranslate] = React.useState(false);
   const [modalVisible, setModalVisible] = React.useState(false);
@@ -49,11 +56,15 @@ export default function Profile({ activeChat, goBack }) {
         {/* Hero Section */}
         <View style={[styles.sectionCard, { marginTop: 0 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 8, paddingTop: 8 }}>
-            <TouchableOpacity style={styles.headerButton} onPress={goBack}>
-              <ArrowLeft size={24} color="#111B21" />
+            <TouchableOpacity onPress={goBack} style={styles.headerButton}>
+              <ArrowLeft color={colors.textInverse} size={24} />
             </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+              <Image source={activeChat?.avatar} style={styles.smallAvatar} />
+              <Text style={styles.headerTitle}>{activeChat?.name || 'Contact Info'}</Text>
+            </View>
             <TouchableOpacity style={styles.headerButton}>
-              <MoreVertical size={24} color="#111B21" />
+              <MoreVertical color={colors.textInverse} size={24} />
             </TouchableOpacity>
           </View>
           
@@ -77,28 +88,28 @@ export default function Profile({ activeChat, goBack }) {
         {/* Business Details List */}
         <View style={styles.sectionCard}>
           <View style={styles.listItem}>
-            <Building2 size={24} color="#8696A0" style={styles.listIcon} />
+            <Building2 size={24} color={colors.iconColor} style={styles.listIcon} />
             <View style={styles.listContent}>
               <Text style={styles.listTextPrimary}>Public and government service</Text>
             </View>
           </View>
 
           <View style={styles.listItem}>
-            <Building2 size={24} color="#8696A0" style={styles.listIcon} />
+            <Building2 size={24} color={colors.iconColor} style={styles.listIcon} />
             <View style={styles.listContent}>
               <Text style={styles.listTextPrimary}>This is official business account of {activeChat.name}.</Text>
             </View>
           </View>
 
           <TouchableOpacity style={styles.listItem}>
-            <Globe size={24} color="#8696A0" style={styles.listIcon} />
+            <Globe size={24} color={colors.iconColor} style={styles.listIcon} />
             <View style={styles.listContent}>
               <Text style={styles.listTextLink} numberOfLines={1}>https://www.ruralhealth.gov.in</Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.listItem}>
-            <UserPlus size={24} color="#8696A0" style={styles.listIcon} />
+            <UserPlus size={24} color={colors.iconColor} style={styles.listIcon} />
             <View style={styles.listContent}>
               <Text style={styles.listTextPrimary}>Add to contacts</Text>
             </View>
@@ -108,7 +119,7 @@ export default function Profile({ activeChat, goBack }) {
         {/* Business Account Info */}
         <View style={styles.sectionCard}>
           <View style={styles.listItem}>
-            <Info size={24} color="#8696A0" style={styles.listIcon} />
+            <Info size={24} color={colors.iconColor} style={styles.listIcon} />
             <View style={styles.listContent}>
               <Text style={styles.listTextPrimary}>Business Account</Text>
               <Text style={styles.listTextSecondary}>This account uses WhatsApp Business</Text>
@@ -118,22 +129,35 @@ export default function Profile({ activeChat, goBack }) {
 
         {/* Settings List */}
         <View style={styles.sectionCard}>
-          <TouchableOpacity style={styles.listItem}>
-            <Bell size={24} color="#8696A0" style={styles.listIcon} />
-            <View style={styles.listContent}>
-              <Text style={styles.listTextPrimary}>Notifications</Text>
+          <View style={styles.listItem}>
+            <View style={styles.listIcon}>
+              <Bell color={colors.iconColor} size={24} />
             </View>
-          </TouchableOpacity>
+            <View style={styles.listContent}>
+              <Text style={styles.listTextPrimary}>Mute notifications</Text>
+            </View>
+          </View>
 
-          <TouchableOpacity style={styles.listItem}>
-            <ImageIcon size={24} color="#8696A0" style={styles.listIcon} />
+          <View style={styles.listItem}>
+            <View style={styles.listIcon}>
+              <Music color={colors.iconColor} size={24} />
+            </View>
+            <View style={styles.listContent}>
+              <Text style={styles.listTextPrimary}>Custom notifications</Text>
+            </View>
+          </View>
+
+          <View style={styles.listItem}>
+            <View style={styles.listIcon}>
+              <ImageIcon color={colors.iconColor} size={24} />
+            </View>
             <View style={styles.listContent}>
               <Text style={styles.listTextPrimary}>Media visibility</Text>
             </View>
-          </TouchableOpacity>
+          </View>
 
           <View style={styles.listItem}>
-            <Lock size={24} color="#8696A0" style={styles.listIcon} />
+            <Lock size={24} color={colors.iconColor} style={styles.listIcon} />
             <View style={styles.listContent}>
               <Text style={styles.listTextPrimary}>Chat lock</Text>
               <Text style={styles.listTextSecondary}>Lock and hide this chat on this device.</Text>
@@ -147,7 +171,7 @@ export default function Profile({ activeChat, goBack }) {
           </View>
 
           <View style={styles.listItem}>
-            <Shield size={24} color="#8696A0" style={styles.listIcon} />
+            <Shield size={24} color={colors.iconColor} style={styles.listIcon} />
             <View style={styles.listContent}>
               <Text style={styles.listTextPrimary}>Security</Text>
               <Text style={styles.listTextSecondary}>
@@ -157,7 +181,7 @@ export default function Profile({ activeChat, goBack }) {
           </View>
 
           <View style={styles.listItem}>
-            <Languages size={24} color="#8696A0" style={styles.listIcon} />
+            <Languages size={24} color={colors.iconColor} style={styles.listIcon} />
             <View style={styles.listContent}>
               <Text style={styles.listTextPrimary}>Translate messages</Text>
             </View>
@@ -167,6 +191,26 @@ export default function Profile({ activeChat, goBack }) {
               trackColor={{ false: '#E9EDEF', true: '#00A884' }}
               thumbColor={'#fff'}
             />
+          </View>
+
+          <View style={styles.listItem}>
+            <View style={styles.listIcon}>
+              <Lock color={colors.iconColor} size={24} />
+            </View>
+            <View style={styles.listContent}>
+              <Text style={styles.listTextPrimary}>Encryption</Text>
+              <Text style={styles.listTextSecondary}>Messages and calls are end-to-end encrypted. Tap to verify.</Text>
+            </View>
+          </View>
+
+          <View style={styles.listItem}>
+            <View style={styles.listIcon}>
+              <Timer color={colors.iconColor} size={24} />
+            </View>
+            <View style={styles.listContent}>
+              <Text style={styles.listTextPrimary}>Disappearing messages</Text>
+              <Text style={styles.listTextSecondary}>Off</Text>
+            </View>
           </View>
         </View>
 
@@ -202,9 +246,11 @@ export default function Profile({ activeChat, goBack }) {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.listItem}>
-            <ThumbsDown size={24} color="#EA0038" style={styles.listIcon} />
+            <View style={styles.listIcon}>
+              <ThumbsDown color={colors.error} size={24} />
+            </View>
             <View style={styles.listContent}>
-              <Text style={[styles.listTextPrimary, { color: '#EA0038' }]}>Report business</Text>
+              <Text style={[styles.listTextPrimary, { color: colors.error }]}>Report {activeChat?.name}</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -213,5 +259,3 @@ export default function Profile({ activeChat, goBack }) {
     </View>
   );
 }
-
-

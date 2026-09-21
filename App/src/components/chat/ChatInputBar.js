@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, TextInput, TouchableOpacity } from 'react-native';
 import { Smile, Paperclip, Camera, Mic, Send } from 'lucide-react-native';
-import { styles } from '../../constants/styles';
+import { useStyles } from '../../constants/styles';
+import { useTheme } from '../../context/ThemeContext';
 import RecordingBar from '../RecordingBar';
 
 export const ChatInputBar = ({ 
@@ -14,6 +15,9 @@ export const ChatInputBar = ({
   handleCamera,
   onRecordSend 
 }) => {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
   return (
     <View style={styles.inputBar}>
       {isRecording ? (
@@ -25,12 +29,12 @@ export const ChatInputBar = ({
         <>
           <View style={styles.inputContainer}>
             <TouchableOpacity style={styles.inputIconButton}>
-              <Smile size={24} color="#8696a0" />
+              <Smile size={24} color={colors.textSecondary} />
             </TouchableOpacity>
 
             <TextInput
               placeholder="Type a message"
-              placeholderTextColor="#8696a0"
+              placeholderTextColor={colors.textSecondary}
               style={styles.chatTextInput}
               value={inputText}
               onChangeText={setInputText}
@@ -38,19 +42,19 @@ export const ChatInputBar = ({
             />
 
             <TouchableOpacity style={styles.inputIconButton} onPress={handleAttachment}>
-              <Paperclip size={24} color="#8696a0" />
+              <Paperclip size={24} color={colors.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.inputIconButton} onPress={handleCamera}>
-              <Camera size={24} color="#8696a0" />
+              <Camera size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity style={styles.micButton} onPress={inputText.trim() ? handleSendMessage : () => setIsRecording(true)}>
             <View style={styles.micCircle}>
               {inputText.trim() ? (
-                <Send size={24} color="#fff" />
+                <Send size={24} color={colors.textInverse} />
               ) : (
-                <Mic size={24} color="#fff" />
+                <Mic size={24} color={colors.textInverse} />
               )}
             </View>
           </TouchableOpacity>

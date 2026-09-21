@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { X } from 'lucide-react-native';
-import { styles } from '../../constants/styles';
+import { useStyles } from '../../constants/styles';
+import { useTheme } from '../../context/ThemeContext';
 
 const languages = [
   { code: 'en', name: 'English', native: 'English' },
@@ -31,6 +32,9 @@ const languages = [
 ];
 
 export const LanguagePickerModal = ({ visible, onClose, currentLanguage, onSelectLanguage }) => {
+  const styles = useStyles();
+  const { colors } = useTheme();
+
   return (
     <Modal
       visible={visible}
@@ -47,7 +51,7 @@ export const LanguagePickerModal = ({ visible, onClose, currentLanguage, onSelec
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Select Language / भाषा चुनें</Text>
             <TouchableOpacity onPress={onClose}>
-              <X size={24} color="#111B21" />
+              <X size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.langList}>
