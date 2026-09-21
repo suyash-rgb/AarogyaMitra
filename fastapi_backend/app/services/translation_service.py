@@ -1,8 +1,10 @@
-﻿import asyncio
+import hashlib
+import asyncio
 import torch
 import logging
 from app.utils.language import INDIC_LANGUAGE_TAGS, FALLBACK_LANGUAGE
-
+from app.services.cache_service import cache_service
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +26,6 @@ class TranslationService:
             
             logger.info(f"Loading Translation Model ({self.model_name})... This may take a moment.")
             
-            # We run the heavy loading in a separate thread to prevent blocking FastAPI
             def _load_sync():
                 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
                 from IndicTransToolkit import IndicProcessor
@@ -33,7 +34,6 @@ class TranslationService:
                 model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name, trust_remote_code=True)
                 ip = IndicProcessor(inference=True)
                 
-                # Use GPU if available (we are keeping it CPU for now if VRAM is an issue)
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 model.to(device)
                 model.eval()
@@ -44,7 +44,7 @@ class TranslationService:
             logger.info(f"Translation Model successfully loaded on {self._device}!")
 
     async def translate(self, text: str, src_lang: str, tgt_lang: str) -> str:
-        """Translates a single string of text."""
+        """Translates a single string of text with 2-Tier Valkey + In-Memory caching."""
         
         if not text or not text.strip():
             raise ValueError("Input text cannot be empty.")
@@ -56,7 +56,16 @@ class TranslationService:
         else:
             raise ValueError(f"Unsupported source language tag: '{src_lang}'")
             
-        # Ensure the model is loaded before translating
+        # Check 2-Tier Cache HIT
+        text_hash = hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
+        cache_key = f"{src_lang}:{tgt_lang}:{text_hash}"
+        cached_translation = cache_service.get(namespace="trans", key=cache_key)
+
+        if cached_translation is not None and isinstance(cached_translation, str):
+            logger.info(f"Translation Cache HIT [{src_lang}->{tgt_lang}] for key: {cache_key[:20]}...")
+            return cached_translation
+
+        # Cache MISS: Ensure the model is loaded before translating
         if self._model is None:
             await self._load_models()
             
@@ -66,12 +75,10 @@ class TranslationService:
             inputs = self._tokenizer(batch, src_lang=src_lang, return_tensors="pt", padding=True)
             inputs = {k: v.to(self._device) for k, v in inputs.items()}
             
-            # Remove src_lang to prevent the HuggingFace warning
             inputs.pop("src_lang", None)
             
             # 2. Generate
             with torch.inference_mode():
-                # use_cache=False bypasses the DynamicCache bug in newer transformers versions
                 outputs = self._model.generate(**inputs, num_beams=5, max_length=256, use_cache=False)
                 
             # 3. Postprocess
@@ -79,5 +86,16 @@ class TranslationService:
             translations = self._ip.postprocess_batch(outputs, lang=tgt_lang)
             return translations[0]
             
-        # Run the heavy PyTorch inference in a background thread!
-        return await asyncio.to_thread(_translate_sync)
+        translated_text = await asyncio.to_thread(_translate_sync)
+
+        # Store in 2-Tier Cache
+        cache_service.set(
+            namespace="trans",
+            key=cache_key,
+            value=translated_text,
+            ttl=settings.VALKEY_TRANS_TTL_SECONDS
+        )
+
+        return translated_text
+
+translation_service = TranslationService()

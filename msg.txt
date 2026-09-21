@@ -1,10 +1,8 @@
-﻿Dataset Augmentation for custom dataset
+feat(cache): implement 2-tier caching across high-impact services
 
-- Implemented LIMA-style strategy (Less Is More for Alignment) favoring strict output formatting over raw dataset size.
-- Authored scoring algorithm based on answer word count, sentence count, and punctuation density (commas/colons) to identify step-by-step instructional formats.
-- Extracted the Top 50 highest-scoring QA pairs from the refined dataset.
-- Unwrapped question arrays (e.g. ["How to treat X?", "What to do for X?"]) to serve as diverse input variants.
-- Performed 10x dynamic oversampling by mapping the diverse question variants to the 50 perfectly formatted answers, generating exactly 500 unique QA pairs.
-- Applied randomized shuffling to the final dataset to prevent sequential condition bias during epoch training.
-- Saved the output as '500_custom_finetuning_dataset.csv'.
-- Added 'generate_500_finetuning_dataset.py' script to the data_preprocessing folder for reproducibility.
+- Expand CacheService to support generic modular get/set with JSON object serialization and fallback to in-memory TTLCache.
+- Integrate 2-tier Valkey caching into TranslationService (trans: key namespace, 7-day TTL).
+- Replace process-bound TTLCache in OlaMapsService with 2-tier cache (geo: key namespace, 2-hour TTL).
+- Integrate 2-tier caching into HealthCareSchemesService RAG search (rag: key namespace, 24-hour TTL).
+- Integrate 2-tier caching into UserIntentClassifierService (intent: key namespace, 7-day TTL).
+- Add cache TTL settings in app/core/config.py.

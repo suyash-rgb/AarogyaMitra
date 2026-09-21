@@ -1,3 +1,9 @@
+import hashlib
+import logging
+from app.services.cache_service import cache_service
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 def renumber_markdown_list(text: str) -> str:
     if not text:
         return ""
@@ -167,6 +173,14 @@ class HealthCareSchemesService:
         top_k: int = 4,
         min_score: float = 0.58
     ) -> RAGSearchResponse:
+        query_clean = user_query.lower().strip()
+        state_clean = (state or "").lower().strip()
+        query_hash = hashlib.sha256(f"{query_clean}:{state_clean}:{top_k}:{min_score}".encode("utf-8")).hexdigest()
+
+        cached_dict = cache_service.get(namespace="rag", key=query_hash)
+        if cached_dict is not None and isinstance(cached_dict, dict):
+            logger.info(f"RAG Cache HIT (2-Tier) for key: {query_hash[:20]}...")
+            return RAGSearchResponse(**cached_dict)
         embed_model = get_embed_model()
         query_vec = list(embed_model.embed([user_query]))[0].tolist()
 
@@ -373,8 +387,15 @@ INSTRUCTIONS:
         elif not llm_answer:
             llm_answer = "No relevant health scheme details were found for your query criteria."
 
-        return RAGSearchResponse(
+        response_obj = RAGSearchResponse(
             query=user_query,
             answer=llm_answer,
             retrieved_chunks=retrieved_chunks
         )
+        cache_service.set(
+            namespace="rag",
+            key=query_hash,
+            value=response_obj.model_dump(),
+            ttl=settings.VALKEY_RAG_TTL_SECONDS
+        )
+        return response_obj

@@ -10,30 +10,10 @@ import httpx
 from app.core.config import settings
 from app.schemas.facility import MedicalFacility
 from app.services.osm_service import osm_service
+from app.services.cache_service import cache_service
 from app.core.utils import haversine_distance, classify_facility, is_relevant_healthcare_facility, deduplicate_facilities
 
 logger = logging.getLogger(__name__)
-
-class TTLCache:
-    def __init__(self, ttl_seconds: int = 600):
-        self.ttl = ttl_seconds
-        self.cache: Dict[Tuple[float, float, str, bool], Tuple[float, List[MedicalFacility]]] = {}
-        self._lock = asyncio.Lock()
-
-    async def get(self, key: Tuple[float, float, str, bool]) -> Optional[List[MedicalFacility]]:
-        async with self._lock:
-            if key in self.cache:
-                timestamp, data = self.cache[key]
-                if time.time() - timestamp < self.ttl:
-                    return data
-                del self.cache[key]
-            return None
-
-    async def set(self, key: Tuple[float, float, str, bool], value: List[MedicalFacility]):
-        async with self._lock:
-            self.cache[key] = (time.time(), value)
-
-facility_cache = TTLCache(ttl_seconds=600)
 
 class OlaMapsService:
     def __init__(self):
@@ -82,13 +62,14 @@ class OlaMapsService:
         facility_type: str = "all",
         exclude_specialty: bool = True
     ) -> List[MedicalFacility]:
-        cache_key = (round(lat, 2), round(lon, 2), facility_type.lower(), exclude_specialty)
-        cached_results = await facility_cache.get(cache_key)
-        if cached_results is not None:
-            logger.info(f"Cache HIT for coordinates {cache_key}")
-            return cached_results
+        cache_key = f"{round(lat, 2)}:{round(lon, 2)}:{facility_type.lower()}:{exclude_specialty}"
+        cached_data = cache_service.get(namespace="geo", key=cache_key)
 
-        logger.info(f"Cache MISS for coordinates {cache_key}. Querying Ola Maps API...")
+        if cached_data is not None and isinstance(cached_data, list):
+            logger.info(f"Geo Cache HIT (2-Tier) for coordinates key: {cache_key}")
+            return [MedicalFacility(**item) for item in cached_data]
+
+        logger.info(f"Geo Cache MISS for key {cache_key}. Querying Ola Maps API...")
 
         facilities: List[MedicalFacility] = []
         try:
@@ -193,7 +174,14 @@ class OlaMapsService:
 
         facilities.sort(key=lambda x: (0 if x.is_government else 1, x.distance_meters))
 
-        await facility_cache.set(cache_key, facilities)
+        # Store in 2-Tier Cache
+        cache_service.set(
+            namespace="geo",
+            key=cache_key,
+            value=[fac.model_dump() for fac in facilities],
+            ttl=settings.VALKEY_GEO_TTL_SECONDS
+        )
+
         return facilities
 
 olamaps_service = OlaMapsService()

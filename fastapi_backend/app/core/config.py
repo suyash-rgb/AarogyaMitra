@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     VALKEY_PORT: int = 6379
     VALKEY_DB: int = 0
     VALKEY_TTS_TTL_SECONDS: int = 86400
+    VALKEY_TRANS_TTL_SECONDS: int = 604800
+    VALKEY_GEO_TTL_SECONDS: int = 7200
+    VALKEY_RAG_TTL_SECONDS: int = 86400
+    VALKEY_INTENT_TTL_SECONDS: int = 604800
 
     @property
     def resolved_ola_maps_api_key(self) -> str:
@@ -36,4 +40,3 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
-

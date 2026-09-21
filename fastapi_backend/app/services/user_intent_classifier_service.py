@@ -1,9 +1,12 @@
 import re
+import hashlib
 import logging
 import torch
 from typing import Tuple, Dict, Any
 from sentence_transformers import SentenceTransformer, util
 from app.schemas.user_intent_classifier import IntentEnum, ExtractedSlots
+from app.services.cache_service import cache_service
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -85,12 +88,12 @@ class UserIntentClassifierService:
         slots = ExtractedSlots()
         lower_text = text.lower()
 
-        pincode_match = re.search(r'\b[1-9][0-9]{5}\b', text)
+        pincode_match = re.search(r'[1-9][0-9]{5}', text)
         if pincode_match:
             slots.pincode = pincode_match.group(0)
 
         for state in INDIAN_STATES:
-            pattern = r'\b' + re.escape(state.lower()) + r'\b'
+            pattern = r'' + re.escape(state.lower()) + r''
             if re.search(pattern, lower_text):
                 if state.upper() in ["MP", "MADHYA PRADESH"]:
                     slots.state = "Madhya Pradesh"
@@ -101,7 +104,7 @@ class UserIntentClassifierService:
                 break
 
         for key, val in SPECIALTIES_MAP.items():
-            if re.search(r'\b' + re.escape(key) + r'\b', lower_text):
+            if re.search(r'' + re.escape(key) + r'', lower_text):
                 slots.specialty = val
                 break
 
@@ -110,33 +113,56 @@ class UserIntentClassifierService:
     def classify_intent(self, text: str) -> Tuple[IntentEnum, float, str]:
         lower_text = text.lower().strip()
 
+        # Check 2-Tier Cache HIT
+        query_hash = hashlib.sha256(lower_text.encode("utf-8")).hexdigest()
+        cached_intent = cache_service.get(namespace="intent", key=query_hash)
+
+        if cached_intent is not None and isinstance(cached_intent, dict):
+            logger.info(f"Intent Cache HIT (2-Tier) for key: {query_hash[:20]}...")
+            return (
+                IntentEnum(cached_intent["intent"]),
+                float(cached_intent["score"]),
+                f"{cached_intent['method']}_CACHED"
+            )
+
         if re.match(r'^(hi|hello|hey|namaste|good morning|good evening|thanks|thank you)[!\.]?$', lower_text):
-            return IntentEnum.GREETING_CONVERSATIONAL, 1.0, "REGEX_FAST_PATH"
+            best_intent, max_score, method = IntentEnum.GREETING_CONVERSATIONAL, 1.0, "REGEX_FAST_PATH"
+        else:
+            scheme_keywords = r'(scheme|yojana|bima|subsidy|govt benefit|financial support|ayushman|myscheme)'
+            facility_keywords = r'(hospital|clinic|phc|chc|dispensary|doctor|specialist|ambulance|nearest|near me)'
 
-        scheme_keywords = r'\b(scheme|yojana|bima|subsidy|govt benefit|financial support|ayushman|myscheme)\b'
-        facility_keywords = r'\b(hospital|clinic|phc|chc|dispensary|doctor|specialist|ambulance|nearest|near me)\b'
+            has_scheme_kw = bool(re.search(scheme_keywords, lower_text))
+            has_facility_kw = bool(re.search(facility_keywords, lower_text))
 
-        has_scheme_kw = bool(re.search(scheme_keywords, lower_text))
-        has_facility_kw = bool(re.search(facility_keywords, lower_text))
+            if has_scheme_kw and not has_facility_kw:
+                best_intent, max_score, method = IntentEnum.GOVT_SCHEMES_DISCOVERY, 0.95, "REGEX_RULE"
+            elif has_facility_kw and not has_scheme_kw:
+                best_intent, max_score, method = IntentEnum.FACILITY_DISCOVERY, 0.95, "REGEX_RULE"
+            else:
+                query_embedding = self._model.encode(text, convert_to_tensor=True)
+                best_intent = IntentEnum.GENERAL_MEDICAL_QA
+                max_score = 0.0
 
-        if has_scheme_kw and not has_facility_kw:
-            return IntentEnum.GOVT_SCHEMES_DISCOVERY, 0.95, "REGEX_RULE"
-        elif has_facility_kw and not has_scheme_kw:
-            return IntentEnum.FACILITY_DISCOVERY, 0.95, "REGEX_RULE"
+                for intent, centroid in self._centroid_embeddings.items():
+                    score = util.cos_sim(query_embedding, centroid).item()
+                    if score > max_score:
+                        max_score = score
+                        best_intent = intent
 
-        query_embedding = self._model.encode(text, convert_to_tensor=True)
-        best_intent = IntentEnum.GENERAL_MEDICAL_QA
-        max_score = 0.0
+                if max_score < 0.40:
+                    best_intent = IntentEnum.GENERAL_MEDICAL_QA
 
-        for intent, centroid in self._centroid_embeddings.items():
-            score = util.cos_sim(query_embedding, centroid).item()
-            if score > max_score:
-                max_score = score
-                best_intent = intent
+                max_score = round(max_score, 4)
+                method = "HYBRID_EMBEDDING"
 
-        if max_score < 0.40:
-            best_intent = IntentEnum.GENERAL_MEDICAL_QA
+        # Cache SET
+        cache_service.set(
+            namespace="intent",
+            key=query_hash,
+            value={"intent": best_intent.value, "score": max_score, "method": method},
+            ttl=settings.VALKEY_INTENT_TTL_SECONDS
+        )
 
-        return best_intent, round(max_score, 4), "HYBRID_EMBEDDING"
+        return best_intent, max_score, method
 
 intent_classifier_service = UserIntentClassifierService()
