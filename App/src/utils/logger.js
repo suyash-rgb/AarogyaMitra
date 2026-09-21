@@ -1,5 +1,6 @@
+import { getOrCreateDeviceId } from './userSession';
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.228.232.83:8080/api/v1";
-const BACKEND_URL = `${BASE_URL}/logs/`;
 
 const sendLogToBackend = async (level, args) => {
   try {
@@ -17,6 +18,9 @@ const sendLogToBackend = async (level, args) => {
       }
       return String(arg);
     }).join(" ");
+
+    const deviceId = await getOrCreateDeviceId();
+    const BACKEND_URL = `${BASE_URL}/logs/?deviceId=${encodeURIComponent(deviceId)}`;
 
     await fetch(BACKEND_URL, {
       method: "POST",
