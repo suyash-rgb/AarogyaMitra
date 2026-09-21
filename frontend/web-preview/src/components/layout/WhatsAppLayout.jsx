@@ -14,6 +14,8 @@ import { getSavedChats, saveChats, getUserState, setUserState as saveUserState, 
 import { classifyQuery } from '../../services/api';
 import { playNotificationSound } from '../../utils/audio';
 
+import { getTranslation } from '../../data/translations';
+
 export default function WhatsAppLayout() {
   const [chats, setChats] = useState(() => getSavedChats() || INITIAL_CHATS);
   const [activeChatId, setActiveChatId] = useState('ai-bot');
@@ -171,7 +173,8 @@ export default function WhatsAppLayout() {
   const handleSelectLanguage = (langObj) => {
     setCurrentLang(langObj.code);
     saveLanguage(langObj.code);
-    handleSendMessage(`Selected language: ${langObj.name} (${langObj.native})`);
+    const confirmMsg = getTranslation(langObj.code, 'confirmLang');
+    handleSendMessage(confirmMsg || `Selected language: ${langObj.name} (${langObj.native})`);
   };
 
   // State Selection

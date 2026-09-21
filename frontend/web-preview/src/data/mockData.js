@@ -11,14 +11,28 @@ export const INDIAN_STATES = [
 export const INDIC_LANGUAGES = [
   { code: 'en', name: 'English', native: 'English' },
   { code: 'hi', name: 'Hindi', native: 'हिंदी' },
+  { code: 'bho', name: 'Bhojpuri', native: 'भोजपुरी' },
   { code: 'mr', name: 'Marathi', native: 'मराठी' },
   { code: 'bn', name: 'Bengali', native: 'বাংলা' },
-  { code: 'te', name: 'Telugu', native: 'తెలుగు' },
   { code: 'ta', name: 'Tamil', native: 'தமிழ்' },
+  { code: 'te', name: 'Telugu', native: 'తెలుగు' },
   { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી' },
   { code: 'kn', name: 'Kannada', native: 'ಕನ್ನಡ' },
+  { code: 'as', name: 'Assamese', native: 'অসমীয়া' },
+  { code: 'brx', name: 'Bodo', native: 'बड़ो' },
+  { code: 'doi', name: 'Dogri', native: 'डोगरी' },
+  { code: 'ks', name: 'Kashmiri', native: 'कॉशुर' },
+  { code: 'gom', name: 'Konkani', native: 'कोंकणी' },
+  { code: 'mai', name: 'Maithili', native: 'मैथिली' },
   { code: 'ml', name: 'Malayalam', native: 'മലയാളം' },
-  { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ' }
+  { code: 'mni', name: 'Manipuri', native: 'মৈতৈলোন্' },
+  { code: 'ne', name: 'Nepali', native: 'नेपाली' },
+  { code: 'or', name: 'Odia', native: 'ଓଡ଼ିଆ' },
+  { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
+  { code: 'sa', name: 'Sanskrit', native: 'संस्कृतम्' },
+  { code: 'sat', name: 'Santali', native: 'ᱥᱟᱱᱛᱟᱲᱤ' },
+  { code: 'sd', name: 'Sindhi', native: 'سنڌي' },
+  { code: 'ur', name: 'Urdu', native: 'اردو' }
 ];
 
 export const EMPANELED_DOCTORS = [
