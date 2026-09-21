@@ -1,15 +1,8 @@
-﻿feat(datasets): preprocess and de-identify custom fine-tuning dataset
+﻿feat(datasets): refine QA dataset for common healthcare context
 
-- Dropped serial number column ('Unnamed: 0') and null entries.
-- Resolved Windows-1252/UTF-8 mojibake encoding issues (converted corrupted symbols back to standard quotes).
-- Stripped extraneous enclosing characters (brackets [] and quotation marks) from both questions and answers.
-- Sanitized Excel-breaking prefixes (removed =, +, -, @ at the start of strings).
-- Enforced answer length quality filters (dropped QA pairs with < 3 sentences OR < 32 words).
-- Performed intelligent deduplication: dropped duplicate questions by preserving the variant with the longest answer length, and prioritizing non-bracketed formats.
-- Localized Western regional terms for the Indian rural context:
-  - Replaced '911' with '108'
-  - Replaced 'emergency room' with 'emergency ward'
-  - Replaced US pharmaceutical brands ('Tylenol', 'Advil', 'Motrin', 'Aleve', 'Acetaminophen') with generic equivalents ('Paracetamol', 'Ibuprofen', 'Naproxen').
-- Enforced a hard dataset cap (removed remaining questions 301-314).
-- Saved output as 'cleaned_merged_data_v2.csv' with 'utf-8-sig' encoding for seamless Excel compatibility.
-- Generated reusable pipeline script in 'scripts/data_preprocessing/preprocess_merged_data.py'.
+- Removed hyper-technical/rare medical terms (Infectious Mononucleosis, Glomerulonephritis, Plantar Fasciitis, Parkinson's Disease, Diabetic Ketoacidosis, Angina, Macular Degeneration, Pancreatitis).
+- Removed geographically irrelevant toxic plant questions (Poison Ivy, Poison Oak, Poison Sumac).
+- De-duplicated overlapping answers by retaining only the most common/sensible question variants (e.g. kept HIV, Swine Flu, Food Poisoning, Panic Attack, Pneumonia, Ulcer, COVID-19; dropped obscure variants). 
+- Completely removed COPD questions.
+- Enforced a hard dataset cap (removed remaining questions from the end).
+- Generated robust preprocessing pipeline scripts in 'scripts/data_preprocessing/'.
