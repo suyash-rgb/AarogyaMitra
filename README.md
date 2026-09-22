@@ -121,6 +121,15 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
+# Configure Environment Variables
+# Create a .env file in the fastapi_backend directory and add the following keys:
+# DATABASE_URL=your_postgres_connection_string
+# GROQ_API_KEY=your_groq_api_key_here
+# GROQ_API_URL=your_groq_api_url_here
+# GROQ_MODEL=your_groq_model_name
+# OLA_MAPS_KRUTRIM_CLOUD_API_BASE_URL=ola_maps_url
+# OLA_MAPS_KRUTRIM_CLOUD_API_KEY=your_ola_maps_key_here
+ 
 # Start the development server
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```

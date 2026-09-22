@@ -1,6 +1,0 @@
-feat(tts): implement Meta MMS-TTS VITS and AI4Bharat Indic-TTS dual services & test endpoints
-
-- Add MetaMMSTTSService (app/services/meta_mms_tts_service.py) with VitsModel checkpoints covering all 22 Indic languages.
-- Add IndicTTSService (app/services/indic_tts_service.py) for AI4Bharat FastPitch/VITS pipeline across Indian languages.
-- Integrate 2-Tier CacheService into both TTS services (mms_tts and indic_tts namespaces).
-- Add POST /api/v1/voice/tts/meta-mms and POST /api/v1/voice/tts/indic-tts test endpoints in voice.py.
