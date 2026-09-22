@@ -1,3 +1,6 @@
+import os
+os.environ["HF_HOME"] = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "models", "huggingface"))
+
 import io
 import wave
 import base64
@@ -25,22 +28,22 @@ INDIC_TO_MMS_LANG = {
     "mal_Mlym": "mal",
     "pan_Guru": "pan",
     "ory_Orya": "ory",
-    "urd_Arab": "urd",
-    "san_Deva": "san",
+    "urd_Arab": "urd-script_arabic",
+    "san_Deva": "hin",
     "asm_Beng": "asm",
-    "nep_Deva": "nep",
-    "snd_Arab": "snd",
-    "snd_Deva": "snd",
-    "sat_Olck": "sat",
-    "doi_Deva": "doi",
-    "mni_Mtei": "mni",
-    "kok_Deva": "kok",
-    "kas_Deva": "kas",
-    "kas_Arab": "kas",
+    "nep_Deva": "hin",
+    "snd_Arab": "hin",
+    "snd_Deva": "hin",
+    "sat_Olck": "hin",
+    "doi_Deva": "dgo",
+    "mni_Mtei": "hin",
+    "kok_Deva": "hin",
+    "kas_Deva": "hin",
+    "kas_Arab": "hin",
     "bho_Deva": "hin",
-    "awa_Deva": "hin",
-    "mai_Deva": "hin",
-    "mag_Deva": "hin",
+    "awa_Deva": "awa",
+    "mai_Deva": "mai",
+    "mag_Deva": "mag",
     "brx_Deva": "hin",
     "eng_Latn": "eng"
 }

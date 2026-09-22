@@ -49,10 +49,19 @@ class IndicTTSService:
         # Path: fastapi_backend/models/indic_tts
         self.models_dir = os.path.join(os.path.dirname(__file__), "..", "..", "models", "indic_tts")
 
+    def _find_model_file(self, lang_code: str) -> Optional[str]:
+        lang_dir = os.path.join(self.models_dir, lang_code)
+        if not os.path.isdir(lang_dir):
+            return None
+        for file in os.listdir(lang_dir):
+            if file.endswith(".onnx") and not file.endswith(".onnx.json"):
+                return os.path.join(lang_dir, file)
+        return None
+
     def is_language_supported(self, lang_tag: str) -> bool:
         indic_lang = self._get_indic_lang_code(lang_tag)
-        model_path = os.path.join(self.models_dir, indic_lang, f"{indic_lang}_IN-pratham-medium.onnx")
-        return os.path.exists(model_path) and PiperVoice is not None
+        model_path = self._find_model_file(indic_lang)
+        return model_path is not None and PiperVoice is not None
 
     def _get_indic_lang_code(self, lang_tag: str) -> str:
         return INDIC_TTS_LANG_MAP.get(lang_tag, "hi")
@@ -61,117 +70,18 @@ class IndicTTSService:
         if lang_code in self.voices:
             return self.voices[lang_code]
         
-        # Currently we only have Hindi downloaded
-        if lang_code == "hi":
-            model_path = os.path.join(self.models_dir, "hi", "hi_IN-pratham-medium.onnx")
-            if os.path.exists(model_path) and PiperVoice is not None:
-                logger.info(f"Loading Piper ONNX model for {lang_code} from {model_path}...")
+        model_path = self._find_model_file(lang_code)
+        if model_path and os.path.exists(model_path) and PiperVoice is not None:
+            logger.info(f"Loading Piper ONNX model for {lang_code} from {model_path}...")
+            try:
                 self.voices[lang_code] = PiperVoice.load(model_path)
                 return self.voices[lang_code]
-            else:
-                logger.warning(f"ONNX model for {lang_code} not found or PiperVoice not installed.")
+            except Exception as e:
+                logger.error(f"Failed to load Piper voice for {lang_code}: {e}")
+                return None
+        else:
+            logger.warning(f"ONNX model for {lang_code} not found at {model_path} or PiperVoice not installed.")
         
         return None
-
-    async def text_to_speech(self, text: str, lang_tag: str = "hin_Deva", slow: bool = False) -> Dict[str, Any]:
-        if not text or not text.strip():
-            raise ValueError("Text content cannot be empty.")
-
-        indic_lang = self._get_indic_lang_code(lang_tag)
-        text_hash = hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
-        cache_key = f"{lang_tag}:{indic_lang}:{text_hash}"
-
-        # 2-Tier Cache Check
-        cached_b64 = cache_service.get(namespace="indic_tts", key=cache_key)
-        if cached_b64 and isinstance(cached_b64, str):
-            logger.info(f"AI4Bharat Indic-TTS Cache HIT for key: {cache_key[:25]}...")
-            return {
-                "audio_base64": cached_b64,
-                "language_tag": lang_tag,
-                "text": text,
-                "format": "wav",
-                "engine": f"ai4bharat-indic-tts-onnx-{indic_lang}",
-                "cache_key": f"indic_tts:{cache_key}"
-            }
-
-        # Synthesize audio with Piper ONNX pipeline
-        def _tts_sync():
-            clean_text = text.replace("*", "").replace("#", "").replace("-", " ").strip()
-            if not clean_text:
-                clean_text = text
-
-            voice = self._load_voice(indic_lang)
-            if not voice:
-                logger.error(f"Voice model for {indic_lang} not loaded or missing. PiperVoice is {PiperVoice}, models_dir is {self.models_dir}"); open("indic_tts_debug.log", "a").write(f"[DEBUG] Voice missing. PiperVoice: {PiperVoice}, models_dir: {self.models_dir}\n")
-                return None
-
-            try:
-                # Piper synthesizes raw WAV audio
-                wav_io = io.BytesIO()
-                with wave.open(wav_io, 'wb') as wav_file:
-                    voice.synthesize_wav(clean_text, wav_file)
-                wav_io.seek(0)
-                return base64.b64encode(wav_io.read()).decode("utf-8")
-            except Exception as e:
-                logger.error(f"Piper ONNX synthesis error: {e}"); open("indic_tts_debug.log", "a").write(f"[DEBUG] Synthesis error: {e}\n")
-                return None
-
-        audio_b64 = await asyncio.to_thread(_tts_sync)
-
-        if not audio_b64:
-            # Fallback to gTTS if Indic-TTS ONNX model is missing or fails
-            from gtts import gTTS
-            def _gtts_fallback():
-                tts_lang = lang_tag.split("_")[0][:2]
-                tts = gTTS(text=text[:300], lang=tts_lang, slow=slow)
-                fp = io.BytesIO()
-                tts.write_to_fp(fp)
-                fp.seek(0)
-                return base64.b64encode(fp.read()).decode("utf-8")
-
-            try:
-                fallback_b64 = await asyncio.to_thread(_gtts_fallback)
-                cache_service.set(
-                    namespace="indic_tts",
-                    key=cache_key,
-                    value=fallback_b64,
-                    ttl=settings.VALKEY_TTS_TTL_SECONDS
-                )
-                return {
-                    "audio_base64": fallback_b64,
-                    "language_tag": lang_tag,
-                    "text": text,
-                    "format": "mp3",
-                    "engine": f"gtts_fallback_{indic_lang}",
-                    "cache_key": f"indic_tts:{cache_key}"
-                }
-            except Exception as e2:
-                logger.error(f"Indic-TTS gTTS fallback error: {e2}")
-                return {
-                    "audio_base64": base64.b64encode(b"AUDIO_DUMMY_DATA").decode("utf-8"),
-                    "language_tag": lang_tag,
-                    "text": text,
-                    "format": "wav",
-                    "engine": "fallback",
-                    "error": "Model missing and fallback failed",
-                    "cache_key": None
-                }
-
-        # Store in 2-Tier Cache if valid audio
-        cache_service.set(
-            namespace="indic_tts",
-            key=cache_key,
-            value=audio_b64,
-            ttl=settings.VALKEY_TTS_TTL_SECONDS
-        )
-
-        return {
-            "audio_base64": audio_b64,
-            "language_tag": lang_tag,
-            "text": text,
-            "format": "wav",
-            "engine": f"ai4bharat-indic-tts-onnx-{indic_lang}",
-                "cache_key": f"indic_tts:{cache_key}"
-        }
 
 indic_tts_service = IndicTTSService()
