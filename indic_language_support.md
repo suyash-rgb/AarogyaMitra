@@ -263,39 +263,39 @@ To prevent audio generation bottlenecks, high latency, and engine overloading un
 
 ---
 
-### 📊 Mermaid Flowchart: TTS Load Balancer Request Routing
+### TTS Load Balancer Request Routing
 
 ```mermaid
 flowchart TD
     A[User / System TTS Request] --> B{Check Valkey 2-Tier Cache}
     
-    B -- Cache HIT --> C[Return Cached Base64 & Audio URL]
-    B -- Cache MISS --> D[Invoke TTS Load Balancer]
+    B -->|Cache HIT| C[Return Cached Base64 & Audio URL]
+    B -->|Cache MISS| D[Invoke TTS Load Balancer]
 
     D --> E{Check Language Support}
     
-    E -- Lang Supported on Indic-TTS? -- Yes --> F{Check Active Indic Concurrency}
-    E -- No --> H[Filter Candidates: Meta MMS & gTTS]
+    E -->|Lang Supported on Indic-TTS? Yes| F{Check Active Indic Concurrency}
+    E -->|No| H[Filter Candidates: Meta MMS & gTTS]
     
-    F -- Active < Max Concurrent (e.g. 3) --> G[Primary Target: AI4Bharat Indic-TTS]
-    F -- Active >= Max Concurrent (High Load) --> H
+    F -->|Active < Max Concurrent| G[Primary Target: AI4Bharat Indic-TTS]
+    F -->|Active >= Max Concurrent| H
     
-    H --> I[Apply Weighted Round-Robin (3:2 Ratio)]
-    I -- WRR Choice 1 --> J[Meta MMS-TTS Engine]
-    I -- WRR Choice 2 --> K[gTTS Service Engine]
+    H --> I[Apply Weighted Round-Robin 3:2 Ratio]
+    I -->|WRR Choice 1| J[Meta MMS-TTS Engine]
+    I -->|WRR Choice 2| K[gTTS Service Engine]
     
     G --> L{Execution Successful?}
     J --> L
     K --> L
     
-    L -- Yes --> M[Store in Valkey Cache & Return Playback URL]
-    L -- No / Error --> N[Trigger Resilient Failover Cascade to Next Engine]
+    L -->|Yes| M[Store in Valkey Cache & Return Playback URL]
+    L -->|No / Error| N[Trigger Resilient Failover Cascade to Next Engine]
     N --> L
 ```
 
 ---
 
-### 🔄 Mermaid Flowchart: Dynamic Candidate Selection & Failover Algorithm
+### 🔄 Dynamic Candidate Selection & Failover Algorithm
 
 ```mermaid
 sequenceDiagram
