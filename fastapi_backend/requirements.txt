@@ -31,3 +31,6 @@ sentence-transformers
 datasets
 valkey
 cachetools
+
+piper-tts
+onnxruntime

@@ -97,7 +97,8 @@ class MetaMMSTTSService:
                 "language_tag": lang_tag,
                 "text": text,
                 "format": "wav",
-                "engine": f"facebook/mms-tts-{mms_lang}"
+                "engine": f"facebook/mms-tts-{mms_lang}",
+                "cache_key": f"mms_tts:{cache_key}"
             }
 
         # Cache MISS: Synthesize Speech using VITS
@@ -145,7 +146,8 @@ class MetaMMSTTSService:
                 "language_tag": lang_tag,
                 "text": text,
                 "format": "wav",
-                "engine": f"facebook/mms-tts-{mms_lang}"
+                "engine": f"facebook/mms-tts-{mms_lang}",
+                "cache_key": f"mms_tts:{cache_key}"
             }
         except Exception as e:
             logger.error(f"Meta MMS-TTS synthesis error for {lang_tag}: {e}")
@@ -160,12 +162,19 @@ class MetaMMSTTSService:
                 return base64.b64encode(fp.read()).decode("utf-8")
 
             fallback_b64 = await asyncio.to_thread(_gtts_fallback)
+            cache_service.set(
+                namespace="mms_tts",
+                key=cache_key,
+                value=fallback_b64,
+                ttl=settings.VALKEY_TTS_TTL_SECONDS
+            )
             return {
                 "audio_base64": fallback_b64,
                 "language_tag": lang_tag,
                 "text": text,
                 "format": "mp3",
-                "engine": f"gtts_fallback_{mms_lang}"
+                "engine": f"gtts_fallback_{mms_lang}",
+                "cache_key": f"mms_tts:{cache_key}"
             }
 
 meta_mms_tts_service = MetaMMSTTSService()

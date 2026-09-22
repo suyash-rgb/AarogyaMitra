@@ -1,10 +1,57 @@
-docs: indian_public_health_helplines_and_administration_master.md
+feat: Meta MMS-TTS VITS vs. AI4Bharat Indic-TTS Implemented & tested
 
-File Structure:
-Section 1: Statutory Emergency & Specialized Public Health Helplines (Merged from Poonam, Priyanshu & Berkay - 20 master entries).
-Section 2: Administrative Hierarchy & Governance Index (From Berkay - Central/State/District/Block/Village governance).
-Section 3: Public Healthcare Delivery Tiers & Facility Classification (From Berkay - AIIMS down to Sub-Centres).
-Section 4: National Health Schemes, Digital Public Infrastructure & Emergency Standards (AB PM-JAY, JSSK, JSY, PMMVY, ABDM, ABHA, eSanjeevani).
-Section 5: RAG Retrieval Architecture & Guardrail Guidelines (From Poonam & Berkay - Zero-shot crisis fallback triggers, Hinglish/vernacular query expansion, and federated state metadata filters).
+--- PART 0: TTS ENGINE IMPLEMENTATIONS (Meta MMS vs. AI4Bharat) ---
 
-closes #13
+1. The Goal:
+To provide high-quality, localized text-to-speech for ArogyaMitra, we needed an offline TTS engine capable of handling 22 Indic languages with accurate pronunciation and low latency. Rather than locking into a single engine, we implemented two separate state-of-the-art TTS services side-by-side to evaluate and compare their performance.
+
+2. Meta MMS-TTS Service (`MetaMMSTTSService`):
+- Architecture: Integrates Facebook's Massively Multilingual Speech (MMS) VITS models via the Hugging Face `transformers` library and PyTorch.
+- Language Mapping: Built a comprehensive mapping dictionary (`INDIC_TO_MMS_LANG`) to translate our internal BCP-47 style tags (e.g., `hin_Deva`, `tam_Taml`) to the 3-letter codes required by Meta's checkpoints (e.g., `hin`, `tam`).
+- Execution: Dynamically loads the specific `facebook/mms-tts-{lang}` checkpoint into memory upon first request. It performs offline inference using PyTorch, converting the resulting float32 waveform array into a standard 16-bit PCM WAV audio format.
+- Pros/Cons: Offers broad language coverage out of the box, but PyTorch and the `transformers` library carry a heavier memory footprint and slightly higher latency.
+
+3. AI4Bharat Indic-TTS Service (`IndicTTSService`):
+- Architecture: Integrates AI4Bharat's Indic-TTS models using the ultra-fast `piper-tts` ONNX runtime pipeline.
+- Execution: Bypasses the heavy PyTorch dependency entirely. It directly loads pre-compiled `.onnx` model files (currently targeting the Hindi `hi_IN-pratham-medium.onnx` model) and synthesizes raw WAV audio almost instantaneously.
+- Pros/Cons: Provides significantly lower latency and is highly optimized for Indian dialects, making it ideal for edge devices or rapid API responses. However, each language requires downloading and managing discrete `.onnx` model files.
+
+Motivation:
+By implementing both engines concurrently and exposing them via dedicated FastAPI endpoints (`/tts/meta-mms` and `/tts/indic-tts`), we established a flexible testing ground. This dual-architecture approach allows us to actively benchmark Meta's broad multilingual VITS models against AI4Bharat's highly-localized, ONNX-optimized models to determine the best fit for production healthcare queries.
+
+--- PART 1: New TTS Architecture & Browser Playback ---
+
+1. The Problem:
+Initially, testing the Text-to-Speech (TTS) endpoints using Swagger UI was tedious. The API solely returned the raw base64-encoded audio strings. To listen to the generated speech, you were forced to run deep, local Python scripts to decode and play back the audio. You requested a much simpler, browser-friendly way to evaluate the Meta MMS and Indic-TTS models directly from the UI.
+
+2. The Solutions Implemented:
+- Schema Evolution: We updated the `TTSResponse` Pydantic schema in `app/schemas/voice.py` to include a new `playback_url` field.
+- Browser Playback Route: We introduced a new, dedicated GET endpoint (`/api/v1/voice/audio/{cache_key}`) in the router. This endpoint accepts a cache key, retrieves the cached base64 audio, decodes it into binary, and streams it back with the `audio/wav` media type. This allows the built-in HTML5 media players in browsers like Chrome to natively play the audio directly from the URL.
+- Piper ONNX Integration (Indic-TTS): We successfully migrated the Indic-TTS service to use the highly optimized `PiperVoice` engine (ONNX format) for rapid, offline audio synthesis, targeting Hindi first.
+- 2-Tier Caching Integration: We heavily integrated both the `MetaMMSTTSService` and `IndicTTSService` with the application's caching layer. The services now generate unique cache keys based on a SHA256 hash of the requested text, the target language, and the engine. They check the cache before synthesizing, and cleanly store the synthesized audio afterward.
+
+Motivation:
+By introducing the caching-based `/audio/` GET route and seamlessly wiring it into the TTS responses as a `playback_url`, we entirely eliminated the need for external testing scripts. This significantly improves developer experience and enables rapid, one-click evaluation of different models, text snippets, and language dialects directly from the browser.
+
+
+--- PART 2: REFACTORING & BUG FIXES (Error Handling & Fallback Caching) ---
+
+1. The Problem:
+Following the initial architecture updates, you reported that the `playback_url` was intermittently coming back as `null` when testing the Meta MMS-TTS and Indic-TTS endpoints, making browser playback impossible in certain scenarios (such as testing non-Hindi languages that weren't downloaded yet, or when a model failed to synthesize).
+
+2. The Root Causes:
+There were multiple cascading issues preventing the `playback_url` from being generated during fallback scenarios:
+- Meta MMS Cache Key Omission: The `MetaMMSTTSService` was successfully generating audio and caching it initially, but omitted the `cache_key` from the dictionary it returned to the router.
+- Indic-TTS Caching Fallback Omission: When you tested a language that didn't have a downloaded ONNX model or if the model failed to load, `IndicTTSService` fell back to generating unplayable `AUDIO_DUMMY_DATA`. In this fallback state, it returned a `cache_key` of `None`.
+- Meta MMS Fallback Omission: If Meta MMS-TTS hit an error and fell back to the Google TTS (`gTTS`) bridge, the fallback audio was generated but NEVER cached in the `cache_service`. Because it wasn't cached, no `cache_key` was generated.
+
+3. The Solutions Implemented:
+- Fixed Meta MMS-TTS Core Logic: Updated `app/services/meta_mms_tts_service.py` to explicitly return the `"cache_key"` in its response dictionary for both Cache HITs and Cache MISSes.
+- Robust gTTS Fallbacks: Completely replaced the unplayable dummy data fallback in `IndicTTSService` with a robust Google TTS (`gTTS`) fallback mechanism. 
+- Cached Fallbacks: Updated the fallback blocks in both `MetaMMSTTSService` and `IndicTTSService` to properly cache the generated `gTTS` fallback audio in Valkey/Memory and return the corresponding `cache_key`.
+- Router-Level Error Handling: Updated the FastAPI router (`app/api/v1/endpoints/voice.py`) to add strict validation. Now, if the underlying service returns an empty base64 string, dummy data, or an empty `cache_key`, the router gracefully intercepts it and raises an `HTTPException` (Status 502 or 500) with a clear, descriptive error message. 
+
+Motivation:
+The primary motivation behind these bug fixes was to ensure a bulletproof testing experience. By caching the fallback audio and guaranteeing a `cache_key` is always returned (or throwing a clear, descriptive 5xx error when it's critically impossible), you can now seamlessly test all 22 Indic languages safely without silent `null` failures in Swagger.
+
+Refers to #15

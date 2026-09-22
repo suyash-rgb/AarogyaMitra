@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, Query
+from fastapi.responses import Response
+import base64
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
@@ -38,6 +40,8 @@ async def text_to_speech_endpoint(request: TTSRequest, deviceId: str = Query(...
             lang_tag=request.language_tag, 
             slow=request.slow
         )
+        if "cache_key" in res and res["cache_key"]:
+            res["playback_url"] = f"/api/v1/voice/audio/{res['cache_key']}"
         return TTSResponse(**res)
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -53,6 +57,22 @@ async def meta_mms_tts_endpoint(request: TTSRequest, deviceId: str = Query(..., 
             lang_tag=request.language_tag, 
             slow=request.slow
         )
+        
+        audio_b64 = res.get("audio_base64", "")
+        if not audio_b64 or "AUDIO_DUMMY_DATA" in audio_b64:
+            raise HTTPException(
+                status_code=502, 
+                detail="Meta MMS-TTS Engine failed to synthesize audio (returned empty or dummy data)."
+            )
+            
+        if "cache_key" in res and res["cache_key"]:
+            res["playback_url"] = f"/api/v1/voice/audio/{res['cache_key']}"
+        else:
+            raise HTTPException(
+                status_code=500, 
+                detail="Meta MMS-TTS Engine failed to return a valid cache_key; playback URL cannot be generated."
+            )
+            
         return TTSResponse(**res)
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -68,6 +88,22 @@ async def indic_tts_endpoint(request: TTSRequest, deviceId: str = Query(..., des
             lang_tag=request.language_tag, 
             slow=request.slow
         )
+        
+        audio_b64 = res.get("audio_base64", "")
+        if not audio_b64 or "AUDIO_DUMMY_DATA" in audio_b64:
+            raise HTTPException(
+                status_code=502, 
+                detail="Indic-TTS Engine failed to synthesize audio (returned empty or dummy data)."
+            )
+            
+        if "cache_key" in res and res["cache_key"]:
+            res["playback_url"] = f"/api/v1/voice/audio/{res['cache_key']}"
+        else:
+            raise HTTPException(
+                status_code=500, 
+                detail="Indic-TTS Engine failed to return a valid cache_key; playback URL cannot be generated."
+            )
+            
         return TTSResponse(**res)
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
@@ -91,3 +127,24 @@ async def process_voice_chat_endpoint(
         return VoiceChatResponse(**res)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'Voice chat pipeline failed: {str(e)}')
+
+@router.get('/audio/{cache_key}')
+async def get_audio_playback(cache_key: str):
+    """Stream the decoded audio directly to the browser for playback."""
+    from app.services.cache_service import cache_service
+    
+    parts = cache_key.split(":", 1)
+    if len(parts) != 2:
+        raise HTTPException(status_code=400, detail="Invalid cache key format")
+    namespace, key = parts[0], parts[1]
+    
+    # Look up in cache
+    cached_b64 = cache_service.get(namespace=namespace, key=key)
+    if not cached_b64:
+        raise HTTPException(status_code=404, detail="Audio not found or expired")
+    
+    try:
+        audio_bytes = base64.b64decode(cached_b64)
+        return Response(content=audio_bytes, media_type="audio/wav")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to decode audio")

@@ -17,6 +17,7 @@ class TTSResponse(BaseModel):
     language_tag: str = Field(..., description='Indic language tag used for synthesis')
     text: str = Field(..., description='Original text synthesized')
     format: str = 'mp3'
+    playback_url: Optional[str] = Field(None, description='URL to directly play the generated audio in browser')
 
 class VoiceChatResponse(BaseModel):
     transcribed_query: str = Field(..., description='Transcribed text of user audio query')
