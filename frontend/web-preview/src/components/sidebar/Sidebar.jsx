@@ -117,7 +117,7 @@ export default function Sidebar({
                   <Globe className="w-4 h-4 text-[#00a884]" />
                   <span>Language: {currentLanguageObj?.name || 'English'}</span>
                 </button>
-                <button
+                {/* <button
                   onClick={() => {
                     onSelectChat('ai-bot');
                     setShowMenu(false);
@@ -126,7 +126,7 @@ export default function Sidebar({
                 >
                   <Bot className="w-4 h-4" />
                   <span>AarogyaMitra Bot</span>
-                </button>
+                </button> */}
               </div>
             )}
           </div>
@@ -168,8 +168,8 @@ export default function Sidebar({
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`px-3 py-1 rounded-full font-semibold transition-all ${isActive
-                  ? 'bg-[#00a884]/20 text-[#00a884] border border-[#00a884]/40'
-                  : 'bg-gray-100 dark:bg-[#202c33] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#2a3942]'
+                ? 'bg-[#00a884]/20 text-[#00a884] border border-[#00a884]/40'
+                : 'bg-gray-100 dark:bg-[#202c33] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#2a3942]'
                 }`}
             >
               {tab}
