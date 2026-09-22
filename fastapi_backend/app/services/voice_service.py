@@ -102,67 +102,8 @@ class VoiceService:
         if not text or not text.strip():
             raise ValueError("Text content cannot be empty.")
 
-        cached_b64 = cache_service.get_tts(lang_tag=lang_tag, text=text, slow=slow)
-        if cached_b64:
-            return {
-                "audio_base64": cached_b64,
-                "language_tag": lang_tag,
-                "text": text,
-                "format": "mp3"
-            }
-
-        tts_lang = self._get_tts_lang_code(lang_tag)
-
-        def _tts_sync():
-            clean_text = text.replace("*", "").replace("#", "").replace("-", " ").strip()
-            if not clean_text:
-                clean_text = text
-
-            try:
-                from gtts import gTTS
-                tts = gTTS(text=clean_text[:500], lang=tts_lang, slow=slow)
-                fp = io.BytesIO()
-                tts.write_to_fp(fp)
-                fp.seek(0)
-                audio_b64 = base64.b64encode(fp.read()).decode("utf-8")
-                return {
-                    "audio_base64": audio_b64,
-                    "language_tag": lang_tag,
-                    "text": text,
-                    "format": "mp3"
-                }
-            except Exception as e1:
-                logger.warning(f"gTTS library fallback triggered: {e1}")
-
-            try:
-                encoded_text = urllib.parse.quote(clean_text[:300])
-                url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={encoded_text}&tl={tts_lang}&client=tw-ob"
-                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-                with urllib.request.urlopen(req, timeout=5) as response:
-                    audio_bytes = response.read()
-                    audio_b64 = base64.b64encode(audio_bytes).decode("utf-8")
-                    return {
-                        "audio_base64": audio_b64,
-                        "language_tag": lang_tag,
-                        "text": text,
-                        "format": "mp3"
-                    }
-            except Exception as e2:
-                logger.error(f"HTTP TTS Fallback error: {e2}")
-                dummy_mp3_b64 = base64.b64encode(b"AUDIO_DUMMY_DATA").decode("utf-8")
-                return {
-                    "audio_base64": dummy_mp3_b64,
-                    "language_tag": lang_tag,
-                    "text": text,
-                    "format": "mp3"
-                }
-
-        res = await asyncio.to_thread(_tts_sync)
-
-        if res.get("audio_base64") and "AUDIO_DUMMY_DATA" not in res["audio_base64"]:
-            cache_service.set_tts(lang_tag=lang_tag, text=text, audio_b64=res["audio_base64"], slow=slow)
-
-        return res
+        from app.services.tts_load_balancer import tts_load_balancer
+        return await tts_load_balancer.text_to_speech(text=text, lang_tag=lang_tag, slow=slow)
 
     async def process_voice_chat(
         self, 

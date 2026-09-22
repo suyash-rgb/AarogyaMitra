@@ -51,6 +51,9 @@ class MetaMMSTTSService:
         self._tokenizers = {}
         self._lock = asyncio.Lock()
 
+    def is_language_supported(self, lang_tag: str) -> bool:
+        return lang_tag in INDIC_TO_MMS_LANG
+
     def _get_mms_lang_code(self, lang_tag: str) -> str:
         return INDIC_TO_MMS_LANG.get(lang_tag, "hin")
 

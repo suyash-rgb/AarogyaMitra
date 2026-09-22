@@ -49,6 +49,11 @@ class IndicTTSService:
         # Path: fastapi_backend/models/indic_tts
         self.models_dir = os.path.join(os.path.dirname(__file__), "..", "..", "models", "indic_tts")
 
+    def is_language_supported(self, lang_tag: str) -> bool:
+        indic_lang = self._get_indic_lang_code(lang_tag)
+        model_path = os.path.join(self.models_dir, indic_lang, f"{indic_lang}_IN-pratham-medium.onnx")
+        return os.path.exists(model_path) and PiperVoice is not None
+
     def _get_indic_lang_code(self, lang_tag: str) -> str:
         return INDIC_TTS_LANG_MAP.get(lang_tag, "hi")
 
