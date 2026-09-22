@@ -245,3 +245,121 @@ export const SUPPORTED_LANGUAGES = [
   { code: "ks", name: "کأشُر (Kashmiri)", voiceSupported: false }  // Text fallback
 ];
 ```
+
+
+---
+
+## ⚖️ Custom Dynamic In-Memory TTS Load Balancer
+
+To prevent audio generation bottlenecks, high latency, and engine overloading under heavy user concurrency, ArogyaMitra implements a custom in-memory **Weighted Round-Robin (WRR)** and **Dynamic Load-Aware TTS Load Balancer** (`TTSLoadBalancer` in `app/services/tts_load_balancer.py`).
+
+### 🛠️ Integrated TTS Engine Hierarchy
+
+| Engine | Service Module | Priority / Weight | Voice Characteristics | Primary Role |
+| :--- | :--- | :--- | :--- | :--- |
+| **1. AI4Bharat Indic-TTS** | `indic_tts_service.py` | **Priority 1 (Weight: 5)** | Natural female voice (Piper ONNX Pratham) | Primary choice for downloaded languages (e.g. Hindi, Bhojpuri, Awadhi) |
+| **2. Meta MMS-TTS** | `meta_mms_tts_service.py` | **Priority 2 (Weight: 3)** | Male VITS Checkpoints | High coverage across 22 scheduled Indic languages |
+| **3. gTTS Service** | `gtts_service.py` | **Priority 3 (Weight: 2)** | Google Cloud Standard TTS | High availability fallback & burst traffic offloading |
+
+---
+
+### 📊 Mermaid Flowchart: TTS Load Balancer Request Routing
+
+```mermaid
+flowchart TD
+    A[User / System TTS Request] --> B{Check Valkey 2-Tier Cache}
+    
+    B -- Cache HIT --> C[Return Cached Base64 & Audio URL]
+    B -- Cache MISS --> D[Invoke TTS Load Balancer]
+
+    D --> E{Check Language Support}
+    
+    E -- Lang Supported on Indic-TTS? -- Yes --> F{Check Active Indic Concurrency}
+    E -- No --> H[Filter Candidates: Meta MMS & gTTS]
+    
+    F -- Active < Max Concurrent (e.g. 3) --> G[Primary Target: AI4Bharat Indic-TTS]
+    F -- Active >= Max Concurrent (High Load) --> H
+    
+    H --> I[Apply Weighted Round-Robin (3:2 Ratio)]
+    I -- WRR Choice 1 --> J[Meta MMS-TTS Engine]
+    I -- WRR Choice 2 --> K[gTTS Service Engine]
+    
+    G --> L{Execution Successful?}
+    J --> L
+    K --> L
+    
+    L -- Yes --> M[Store in Valkey Cache & Return Playback URL]
+    L -- No / Error --> N[Trigger Resilient Failover Cascade to Next Engine]
+    N --> L
+```
+
+---
+
+### 🔄 Mermaid Flowchart: Dynamic Candidate Selection & Failover Algorithm
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as Voice API / Voice Service
+    participant LB as TTS Load Balancer
+    participant Cache as Valkey 2-Tier Cache
+    participant Indic as AI4Bharat Indic-TTS
+    participant MMS as Meta MMS-TTS
+    participant GTTS as gTTS Service
+
+    App->>LB: text_to_speech(text, lang_tag)
+    LB->>Cache: check_cache(namespace, cache_key)
+    alt Cache Hit
+        Cache-->>LB: Return cached audio
+        LB-->>App: Audio base64 + playback_url
+    else Cache Miss
+        LB->>LB: Check is_language_supported(lang_tag)
+        alt Indic-TTS Supported & Concurrency < Threshold
+            LB->>Indic: text_to_speech(text, lang_tag)
+            alt Synthesis Success
+                Indic-->>LB: WAV Audio Data
+            else Synthesis Failed
+                Indic-->>LB: Failure Signal
+                LB->>MMS: Failover to Meta MMS-TTS
+                MMS-->>LB: Audio Data
+            end
+        else Indic-TTS Unsupported or Overloaded
+            LB->>LB: Evaluate WRR (Meta MMS vs gTTS)
+            alt WRR selects Meta MMS
+                LB->>MMS: text_to_speech(text, lang_tag)
+                MMS-->>LB: Audio Data
+            else WRR selects gTTS
+                LB->>GTTS: text_to_speech(text, lang_tag)
+                GTTS-->>LB: Audio Data
+            end
+        end
+        LB->>Cache: set_cache(audio_b64, ttl=VALKEY_TTL)
+        LB-->>App: Return TTSResponse
+    end
+```
+
+---
+
+### 📈 Load Balancer Health & Concurrency Monitoring
+
+Real-time load balancer metrics can be inspected via the backend endpoint:
+
+`GET /api/v1/voice/tts/lb-status`
+
+**Response Example:**
+```json
+{
+  "max_concurrent_indic": 3,
+  "active_requests": {
+    "indic_tts": 0,
+    "meta_mms": 0,
+    "gtts": 0
+  },
+  "weights": {
+    "indic_tts": 5,
+    "meta_mms": 3,
+    "gtts": 2
+  },
+  "total_requests_processed": 142
+}
+```
