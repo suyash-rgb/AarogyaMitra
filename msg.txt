@@ -1,0 +1,10 @@
+docs: indian_public_health_helplines_and_administration_master.md
+
+File Structure:
+Section 1: Statutory Emergency & Specialized Public Health Helplines (Merged from Poonam, Priyanshu & Berkay - 20 master entries).
+Section 2: Administrative Hierarchy & Governance Index (From Berkay - Central/State/District/Block/Village governance).
+Section 3: Public Healthcare Delivery Tiers & Facility Classification (From Berkay - AIIMS down to Sub-Centres).
+Section 4: National Health Schemes, Digital Public Infrastructure & Emergency Standards (AB PM-JAY, JSSK, JSY, PMMVY, ABDM, ABHA, eSanjeevani).
+Section 5: RAG Retrieval Architecture & Guardrail Guidelines (From Poonam & Berkay - Zero-shot crisis fallback triggers, Hinglish/vernacular query expansion, and federated state metadata filters).
+
+closes #13
