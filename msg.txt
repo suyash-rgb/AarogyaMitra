@@ -1,8 +1,6 @@
-feat(cache): implement 2-tier caching across high-impact services
+feat(tts): implement Meta MMS-TTS VITS and AI4Bharat Indic-TTS dual services & test endpoints
 
-- Expand CacheService to support generic modular get/set with JSON object serialization and fallback to in-memory TTLCache.
-- Integrate 2-tier Valkey caching into TranslationService (trans: key namespace, 7-day TTL).
-- Replace process-bound TTLCache in OlaMapsService with 2-tier cache (geo: key namespace, 2-hour TTL).
-- Integrate 2-tier caching into HealthCareSchemesService RAG search (rag: key namespace, 24-hour TTL).
-- Integrate 2-tier caching into UserIntentClassifierService (intent: key namespace, 7-day TTL).
-- Add cache TTL settings in app/core/config.py.
+- Add MetaMMSTTSService (app/services/meta_mms_tts_service.py) with VitsModel checkpoints covering all 22 Indic languages.
+- Add IndicTTSService (app/services/indic_tts_service.py) for AI4Bharat FastPitch/VITS pipeline across Indian languages.
+- Integrate 2-Tier CacheService into both TTS services (mms_tts and indic_tts namespaces).
+- Add POST /api/v1/voice/tts/meta-mms and POST /api/v1/voice/tts/indic-tts test endpoints in voice.py.

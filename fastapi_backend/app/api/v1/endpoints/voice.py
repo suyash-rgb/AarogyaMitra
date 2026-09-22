@@ -4,6 +4,8 @@ from typing import Optional
 
 from app.schemas.voice import STTResponse, TTSRequest, TTSResponse, VoiceChatResponse
 from app.services.voice_service import VoiceService
+from app.services.meta_mms_tts_service import meta_mms_tts_service
+from app.services.indic_tts_service import indic_tts_service
 from app.db.session import get_session
 
 router = APIRouter(
@@ -16,8 +18,9 @@ voice_service = VoiceService()
 @router.post('/stt', response_model=STTResponse)
 async def speech_to_text_endpoint(
     file: UploadFile = File(...),
-    lang_tag: str = Form('hin_Deva')
-, deviceId: str = Query(..., description="Device ID")):
+    lang_tag: str = Form('hin_Deva'),
+    deviceId: str = Query(..., description="Device ID")
+):
     try:
         audio_bytes = await file.read()
         res = await voice_service.speech_to_text(audio_bytes=audio_bytes, lang_tag=lang_tag)
@@ -41,12 +44,43 @@ async def text_to_speech_endpoint(request: TTSRequest, deviceId: str = Query(...
     except Exception as e:
         raise HTTPException(status_code=500, detail=f'TTS processing failed: {str(e)}')
 
+@router.post('/tts/meta-mms', response_model=TTSResponse)
+async def meta_mms_tts_endpoint(request: TTSRequest, deviceId: str = Query(..., description="Device ID")):
+    """Synthesizes audio using Meta MMS-TTS (VITS Checkpoints) for evaluation across 22 Indic languages."""
+    try:
+        res = await meta_mms_tts_service.text_to_speech(
+            text=request.text, 
+            lang_tag=request.language_tag, 
+            slow=request.slow
+        )
+        return TTSResponse(**res)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Meta MMS-TTS processing failed: {str(e)}')
+
+@router.post('/tts/indic-tts', response_model=TTSResponse)
+async def indic_tts_endpoint(request: TTSRequest, deviceId: str = Query(..., description="Device ID")):
+    """Synthesizes audio using AI4Bharat Indic-TTS for evaluation across supported Indian languages."""
+    try:
+        res = await indic_tts_service.text_to_speech(
+            text=request.text, 
+            lang_tag=request.language_tag, 
+            slow=request.slow
+        )
+        return TTSResponse(**res)
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Indic-TTS processing failed: {str(e)}')
+
 @router.post('/process-chat', response_model=VoiceChatResponse)
 async def process_voice_chat_endpoint(
     file: UploadFile = File(...),
     lang_tag: str = Form('hin_Deva'),
-    db: AsyncSession = Depends(get_session)
-, deviceId: str = Query(..., description="Device ID")):
+    db: AsyncSession = Depends(get_session),
+    deviceId: str = Query(..., description="Device ID")
+):
     try:
         audio_bytes = await file.read()
         res = await voice_service.process_voice_chat(
