@@ -1,3 +1,4 @@
+from app.services.cache_service import cache_service
 import math
 from typing import Optional, List, Dict, Any
 from sqlalchemy import text, select, func, or_, and_
@@ -220,11 +221,17 @@ class GovtHealthcareFacilityService:
         state_name: Optional[str] = None,
         district_name: Optional[str] = None
     ) -> LocationHierarchyResponse:
+        cache_key = f"{state_name.strip().lower() if state_name else 'ALL'}:{district_name.strip().lower() if district_name else 'ALL'}"
+        cached_dict = cache_service.get(namespace="geo_hierarchy", key=cache_key)
+        if cached_dict is not None and isinstance(cached_dict, dict):
+            return LocationHierarchyResponse(**cached_dict)
         if not state_name:
             stmt = select(HealthcareFacility.state_name).distinct().order_by(HealthcareFacility.state_name.asc())
             res = await session.execute(stmt)
             states = [r for r in res.scalars().all() if r]
-            return LocationHierarchyResponse(states=states)
+            resp = LocationHierarchyResponse(states=states)
+            cache_service.set(namespace='geo_hierarchy', key=cache_key, value=resp.model_dump() if hasattr(resp, 'model_dump') else resp.dict(), ttl=86400)
+            return resp
 
         state_clean = state_name.strip().lower()
         if not district_name:
@@ -233,7 +240,9 @@ class GovtHealthcareFacilityService:
             ).distinct().order_by(HealthcareFacility.district_name.asc())
             res = await session.execute(stmt)
             districts = [r for r in res.scalars().all() if r]
-            return LocationHierarchyResponse(districts=districts)
+            resp = LocationHierarchyResponse(districts=districts)
+            cache_service.set(namespace='geo_hierarchy', key=cache_key, value=resp.model_dump() if hasattr(resp, 'model_dump') else resp.dict(), ttl=86400)
+            return resp
 
         district_clean = district_name.strip().lower()
         stmt_t = select(HealthcareFacility.taluka_name).where(
@@ -258,6 +267,8 @@ class GovtHealthcareFacilityService:
         talukas = [r for r in res_t.scalars().all() if r]
         blocks = [r for r in res_b.scalars().all() if r]
 
-        return LocationHierarchyResponse(talukas=talukas, blocks=blocks)
+        resp = LocationHierarchyResponse(talukas=talukas, blocks=blocks)
+        cache_service.set(namespace='geo_hierarchy', key=cache_key, value=resp.model_dump() if hasattr(resp, 'model_dump') else resp.dict(), ttl=86400)
+        return resp
 
 govt_healthcare_facility_service = GovtHealthcareFacilityService()

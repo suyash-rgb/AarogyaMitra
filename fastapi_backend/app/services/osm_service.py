@@ -1,3 +1,5 @@
+from app.services.cache_service import cache_service
+from app.core.config import settings
 import asyncio
 import logging
 import math
@@ -30,6 +32,12 @@ class OSMService:
         facility_type: str = "all",
         exclude_specialty: bool = True
     ) -> List[MedicalFacility]:
+        cache_key = f"{round(lat, 2)}:{round(lon, 2)}:{radius}:{facility_type.lower()}:{exclude_specialty}"
+        cached_data = cache_service.get(namespace="geo_osm", key=cache_key)
+        if cached_data is not None and isinstance(cached_data, list):
+            logger.info(f"OSM Cache HIT (2-Tier) for key: {cache_key}")
+            return [MedicalFacility(**item) for item in cached_data]
+
         logger.info(f"[OSM Hybrid Fallback] Querying Overpass API for lat={lat}, lon={lon}, radius={radius}m...")
 
         overpass_query = f"""[out:json][timeout:15];
@@ -159,6 +167,15 @@ out center;"""
 
         facilities = deduplicate_facilities(facilities)
         facilities.sort(key=lambda x: (0 if x.is_government else 1, x.distance_meters))
+
+        # Store in 2-Tier Cache
+        cache_service.set(
+            namespace="geo_osm",
+            key=cache_key,
+            value=[f.model_dump() if hasattr(f, 'model_dump') else f.dict() for f in facilities],
+            ttl=getattr(settings, 'VALKEY_GEO_TTL_SECONDS', 7200)
+        )
+
         return facilities
 
 osm_service = OSMService()
