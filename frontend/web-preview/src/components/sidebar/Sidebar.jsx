@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CircleDashed, Users, MessageSquarePlus, MoreVertical, Search, Bot, MapPin, Globe, Sparkles, Settings as SettingsIcon } from 'lucide-react';
+import { MessageSquarePlus, MoreVertical, Search, Bot, Globe, Sparkles, Settings as SettingsIcon } from 'lucide-react';
 import ChatListItem from './ChatListItem';
 import SettingsDrawer from '../drawers/SettingsDrawer';
 
@@ -61,7 +61,7 @@ export default function Sidebar({
             <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-100 leading-tight">Leo (You)</h3>
             <span className="text-[10px] text-[#00a884] font-medium flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-[#00a884] animate-ping" />
-              Online • Healthcare Active
+              Online
             </span>
           </div>
         </div>
@@ -75,18 +75,7 @@ export default function Sidebar({
           >
             <Sparkles className="w-5 h-5 text-blue-500" />
           </button>
-          <button
-            title="Status / Updates"
-            className="p-2 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
-          >
-            <CircleDashed className="w-5 h-5" />
-          </button>
-          <button
-            title="Communities"
-            className="p-2 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200 dark:hover:bg-[#2a3942] rounded-full transition-all"
-          >
-            <Users className="w-5 h-5" />
-          </button>
+
           <button
             onClick={onOpenNewChat}
             title="New Chat"
@@ -94,7 +83,7 @@ export default function Sidebar({
           >
             <MessageSquarePlus className="w-5 h-5 text-[#00a884]" />
           </button>
-          
+
           {/* 3 Dots Menu */}
           <div className="relative">
             <button
@@ -117,16 +106,7 @@ export default function Sidebar({
                   <SettingsIcon className="w-4 h-4 text-[#00a884]" />
                   <span>Settings</span>
                 </button>
-                <button
-                  onClick={() => {
-                    onOpenStateModal();
-                    setShowMenu(false);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-[#182229] transition-all text-left"
-                >
-                  <MapPin className="w-4 h-4 text-[#00a884]" />
-                  <span>State: {currentState}</span>
-                </button>
+
                 <button
                   onClick={() => {
                     onOpenLanguageModal();
@@ -153,15 +133,8 @@ export default function Sidebar({
         </div>
       </div>
 
-      {/* State & Language Quick Badges Bar */}
-      <div className="bg-gray-50 dark:bg-[#111b21] px-3 py-2 flex items-center justify-between border-b border-gray-200 dark:border-[#222d34] text-xs">
-        <button
-          onClick={onOpenStateModal}
-          className="flex items-center gap-1.5 bg-white dark:bg-[#202c33] hover:bg-gray-200 dark:hover:bg-[#2a3942] text-gray-700 dark:text-gray-200 px-3 py-1 rounded-full border border-gray-200 dark:border-gray-700 transition-all font-medium shadow-xs"
-        >
-          <MapPin className="w-3.5 h-3.5 text-[#00a884]" />
-          <span className="truncate max-w-[120px]">{currentState}</span>
-        </button>
+      {/* Language Quick Badge Bar */}
+      <div className="bg-gray-50 dark:bg-[#111b21] px-3 py-2 flex items-center justify-end border-b border-gray-200 dark:border-[#222d34] text-xs">
 
         <button
           onClick={onOpenLanguageModal}
@@ -194,11 +167,10 @@ export default function Sidebar({
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-3 py-1 rounded-full font-semibold transition-all ${
-                isActive
+              className={`px-3 py-1 rounded-full font-semibold transition-all ${isActive
                   ? 'bg-[#00a884]/20 text-[#00a884] border border-[#00a884]/40'
                   : 'bg-gray-100 dark:bg-[#202c33] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-[#2a3942]'
-              }`}
+                }`}
             >
               {tab}
             </button>
