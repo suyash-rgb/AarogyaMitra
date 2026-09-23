@@ -19,6 +19,7 @@ from app.api.v1.endpoints.logs import router as logs_router
 from app.api.v1.endpoints.healthcare_schemes import router as healthcare_schemes_router
 from app.api.v1.endpoints.user_intent_classifier import router as user_intent_classifier_router
 from app.api.v1.endpoints.voice import router as voice_router
+from app.api.v1.endpoints.llm import router as llm_router
 
 # Configure basic logging
 logging.basicConfig(level=logging.INFO)
@@ -57,6 +58,7 @@ app.include_router(logs_router, prefix='/api/v1')
 app.include_router(healthcare_schemes_router, prefix='/api/v1/schemes', tags=["Healthcare Schemes"])
 app.include_router(user_intent_classifier_router, prefix="/api/v1/router", tags=["User Intent Router"])
 app.include_router(voice_router, prefix="/api/v1")
+app.include_router(llm_router, prefix="/api/v1")
 
 # Define session type alias
 SessionDep = Annotated[AsyncSession, Depends(get_session)]

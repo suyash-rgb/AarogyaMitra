@@ -1,0 +1,11 @@
+feat: Implement local GGUF LLM service with Intent routing & logging
+
+- Integrated `llama-cpp-python` for local fine-tuned Qwen 3.5 2B model inference
+- Created `LLMService` in `app/services/llm_service.py` using Singleton pattern for optimized memory load and continuous availability
+- Added `target_intent` injection capability for language-specific dynamic system prompting to prevent context collapse in Hinglish/Devanagari queries
+- Implemented `<think>` reasoning block parsing and automated cleanup
+- Added native inference evaluations logging to JSONL (`logs/llm_evaluations.jsonl`) and Markdown (`logs/llm_evaluations_log.md`)
+- Registered `POST /api/v1/llm/query` endpoint with configurable token and repetition penalties
+- Updated `.gitignore` to explicitly skip pushing heavy `.gguf` weight files
+
+Intial tests suggest heavy cross-lingual drift when prompted in another language. 

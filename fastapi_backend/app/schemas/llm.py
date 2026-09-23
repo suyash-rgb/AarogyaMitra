@@ -1,0 +1,17 @@
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any
+
+class LLMQueryRequest(BaseModel):
+    prompt: str = Field(..., description="The user query or prompt for the LLM")
+    system_prompt: Optional[str] = Field(None, description="Optional custom system prompt")
+    target_intent: Optional[str] = Field(None, description="The classified intent of the user query")
+    max_tokens: Optional[int] = Field(512, description="Maximum response tokens")
+    temperature: Optional[float] = Field(0.7, description="Sampling temperature")
+    top_p: Optional[float] = Field(0.9, description="Top-p nucleus sampling parameter")
+    repeat_penalty: Optional[float] = Field(1.15, description="Penalty for token repetition")
+
+class LLMQueryResponse(BaseModel):
+    response: str = Field(..., description="The generated response text from the fine-tuned LLM")
+    execution_time_sec: float = Field(..., description="Inference time in seconds")
+    usage: Optional[Dict[str, Any]] = Field(None, description="Token usage stats")
+    model_name: str = Field(..., description="Name of the model file used")
