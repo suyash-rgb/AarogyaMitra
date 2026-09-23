@@ -117,3 +117,27 @@ It sounds like you might have a viral fever, which usually requires first-aid tr
 
 ---
 
+## Query at 2026-09-23T13:47:53.317175Z
+**Model**: `Qwen3.5-2B.Q4_K_M.gguf` | **Execution Time**: `7.42s` | **Intent**: `None` | **Repeat Penalty**: `1.15`
+**Usage**: `{'prompt_tokens': 52, 'completion_tokens': 102, 'total_tokens': 154}`
+
+### Prompt:
+```text
+
+```
+
+### Response:
+```text
+Before we look at self-care options, is the pain throbbing or a dull ache, and does it radiate down your legs?
+
+• Apply a cold compress to reduce swelling.
+• Elevate the injured joint above heart level if no fracture is suspected.
+• Avoid pressing directly on the wound.
+• Wash away dust with clean water only.
+• Cover the wound gently with a sterile bandage.
+
+If the burn is large or deep, seek medical help immediately.
+```
+
+---
+

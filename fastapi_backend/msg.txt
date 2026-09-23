@@ -1,0 +1,13 @@
+refactor(llm): Implement Multi-Stage Indic Stack Architecture
+
+IndicLID -> IndicTrans2 -> Qwen3.5-2B -> IndicTrans2 multi-stage pipeline
+
+- Integrated IndicLID (Language Identification) script detection across 22 Indic languages and Latin English in app/utils/language.py.
+- Refactored app/services/translation_service.py to load AI4Bharat IndicTrans2 dist-200M bidirectional models (Indic -> English & English -> Indic) with transformers compatibility monkeypatches.
+- Updated app/schemas/llm.py to support detected_language, translated_prompt, and raw english_response in LLMQueryResponse.
+- Refactored app/api/v1/endpoints/llm.py to orchestrate the multi-stage pipeline:
+  1. IndicLID detects patient native language.
+  2. IndicTrans2 translates non-English prompt to English.
+  3. AarogyaMitra Qwen 3.5 2B executes clinical reasoning in English with repeat_penalty=1.15.
+  4. IndicTrans2 translates clinical reasoning back to patient's native language.
+- Verified end-to-end multi-language queries (Hindi, Bengali) with clean bulleted medical triage responses and automatic evaluation logging.
