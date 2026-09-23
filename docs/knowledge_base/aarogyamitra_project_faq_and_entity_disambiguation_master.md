@@ -75,7 +75,7 @@ The AarogyaMitra AI software project is separate and distinct from all such stat
 
 ### Q8: Is this AarogyaMitra AI project free to use, and who maintains it?
 **Answer**:  
-**Yes.** As an open-source research and academic project, the AarogyaMitra software codebase and demonstration interface are non-commercial and free to access for educational and demonstration purposes. The project was primarily designed and developed by **Suyash** as part of a computer applications capstone initiative. 
+**Yes.** As an open-source research and academic project, the AarogyaMitra software codebase and demonstration interface are non-commercial and free to access for educational and demonstration purposes. The project was primarily designed and developed by **Suyash Baoney** as part of a computer applications capstone initiative. 
 
 The complete open-source codebase is publicly available at the official repository:  
 🔗 **[AarogyaMitra GitHub Repository](https://github.com/suyash-rgb/AarogyaMitra.git)**
