@@ -1,11 +1,13 @@
-feat: Implement local GGUF LLM service with Intent routing & logging
+refactor(llm): Implement Multi-Stage Indic Stack Architecture
 
-- Integrated `llama-cpp-python` for local fine-tuned Qwen 3.5 2B model inference
-- Created `LLMService` in `app/services/llm_service.py` using Singleton pattern for optimized memory load and continuous availability
-- Added `target_intent` injection capability for language-specific dynamic system prompting to prevent context collapse in Hinglish/Devanagari queries
-- Implemented `<think>` reasoning block parsing and automated cleanup
-- Added native inference evaluations logging to JSONL (`logs/llm_evaluations.jsonl`) and Markdown (`logs/llm_evaluations_log.md`)
-- Registered `POST /api/v1/llm/query` endpoint with configurable token and repetition penalties
-- Updated `.gitignore` to explicitly skip pushing heavy `.gguf` weight files
+IndicLID -> IndicTrans2 -> Qwen3.5-2B -> IndicTrans2 multi-stage pipeline
 
-Intial tests suggest heavy cross-lingual drift when prompted in another language. 
+- Integrated IndicLID (Language Identification) script detection across 22 Indic languages and Latin English in app/utils/language.py.
+- Refactored app/services/translation_service.py to load AI4Bharat IndicTrans2 dist-200M bidirectional models (Indic -> English & English -> Indic) with transformers compatibility monkeypatches.
+- Updated app/schemas/llm.py to support detected_language, translated_prompt, and raw english_response in LLMQueryResponse.
+- Refactored app/api/v1/endpoints/llm.py to orchestrate the multi-stage pipeline:
+  1. IndicLID detects patient native language.
+  2. IndicTrans2 translates non-English prompt to English.
+  3. AarogyaMitra Qwen 3.5 2B executes clinical reasoning in English with repeat_penalty=1.15.
+  4. IndicTrans2 translates clinical reasoning back to patient's native language.
+- Verified end-to-end multi-language queries (Hindi, Bengali) with clean bulleted medical triage responses and automatic evaluation logging.
