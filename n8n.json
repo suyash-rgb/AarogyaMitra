@@ -1,0 +1,596 @@
+{
+    "name": "AarogyaMitra - Mermaid Converted",
+    "nodes": [
+        {
+            "parameters": {},
+            "id": "1000",
+            "name": "N1: Webhook Trigger",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                0,
+                0
+            ],
+            "notes": "Webhook Trigger (WhatsApp / PWA Client)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1001",
+            "name": "N2: MIME Switch",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                320,
+                0
+            ],
+            "notes": "MIME Switch (Payload Dispatcher)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1002",
+            "name": "N3: IndicLID",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                640,
+                -400
+            ],
+            "notes": "IndicLID (Lang/Script Detect)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1003",
+            "name": "N4: Hinglish?",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                960,
+                -400
+            ],
+            "notes": "Hinglish? (Latin Switch)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1004",
+            "name": "N5: IndicXlit",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1280,
+                -600
+            ],
+            "notes": "IndicXlit (Transliteration to Native)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1005",
+            "name": "N6: CTranslate2 NLLB INT8",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1600,
+                -400
+            ],
+            "notes": "IndicTrans2 (Translate to Clinical Eng)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1006",
+            "name": "N7: Laya Classifier",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1920,
+                -400
+            ],
+            "notes": "Laya Classifier (ModernBERT Intent Router)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1007",
+            "name": "H1: Emergency Red Flag",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2240,
+                -900
+            ],
+            "notes": "Emergency Red Flag (Short-Circuit)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1008",
+            "name": "H2: Postgres Query",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2240,
+                -600
+            ],
+            "notes": "Postgres Query (SQL OPD/Bed Lookup)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1009",
+            "name": "H3: ICMR RAG Retriever",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2240,
+                -300
+            ],
+            "notes": "ICMR RAG Retriever (Vector Store search)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1010",
+            "name": "H4: In-Memory Vector DB (Chroma/Qdrant)",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2240,
+                0
+            ],
+            "notes": "pgvector Search (Similarity Case History)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1011",
+            "name": "H5: Direct Core Triage",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2240,
+                300
+            ],
+            "notes": "Direct Core Triage (Flag for core dialog)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1012",
+            "name": "N8: Attachment Type",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                640,
+                400
+            ],
+            "notes": "Attachment Type (Media Router)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1013",
+            "name": "N9: PyMuPDF Parser",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                960,
+                200
+            ],
+            "notes": "PyMuPDF Parser (Deterministic Tabular PDF)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1014",
+            "name": "N10: Qwen VLM Vision",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                960,
+                600
+            ],
+            "notes": "Qwen VLM Vision (Transcription endpoint)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1015",
+            "name": "N11: Lexicon Matcher",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                1280,
+                600
+            ],
+            "notes": "Lexicon Matcher (Generic Salts Fuzzy)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1016",
+            "name": "C1: Context Synthesizer",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                2720,
+                0
+            ],
+            "notes": "Context Synthesizer (Merge Context payloads)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1017",
+            "name": "N12: AarogyaMitra Qwen LLM",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3040,
+                0
+            ],
+            "notes": "AarogyaMitra Qwen LLM (Q4_K_M localized triage)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1018",
+            "name": "N13: CTranslate2 Reverse",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3360,
+                0
+            ],
+            "notes": "IndicTrans2 Reverse (English -> Native Script)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {},
+            "id": "1019",
+            "name": "N14: Meta MMS VITS ONNX (TTS)",
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                3680,
+                0
+            ],
+            "notes": "Output Dispatcher (WhatsApp Graph API / PWA)",
+            "notesInFlow": true
+        },
+        {
+            "parameters": {
+                "content": "## Ingestion & Dispatch",
+                "width": 600,
+                "height": 350,
+                "color": 3
+            },
+            "id": "1020",
+            "name": "SECTION: Ingestion & Dispatch",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                -100,
+                -150
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## Track A: Conversational NLP Engine",
+                "width": 1800,
+                "height": 500,
+                "color": 4
+            },
+            "id": "1021",
+            "name": "SECTION: Track A Conversational",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                540,
+                -800
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## Track A Downstream Handlers & Execution",
+                "width": 500,
+                "height": 1600,
+                "color": 6
+            },
+            "id": "1022",
+            "name": "SECTION: Track A Handlers",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                2140,
+                -1050
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## Track B: Document & Vision Bypass",
+                "width": 1100,
+                "height": 750,
+                "color": 5
+            },
+            "id": "1023",
+            "name": "SECTION: Track B Document",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                540,
+                100
+            ]
+        },
+        {
+            "parameters": {
+                "content": "## Convergence & Localization & Egress",
+                "width": 1400,
+                "height": 500,
+                "color": 2
+            },
+            "id": "1024",
+            "name": "SECTION: Convergence",
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                2620,
+                -200
+            ]
+        }
+    ],
+    "connections": {
+        "N1: Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "N2: MIME Switch",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N2: MIME Switch": {
+            "main": [
+                [
+                    {
+                        "node": "N3: IndicLID",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "N8: Attachment Type",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N3: IndicLID": {
+            "main": [
+                [
+                    {
+                        "node": "N4: Hinglish?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N4: Hinglish?": {
+            "main": [
+                [
+                    {
+                        "node": "N5: IndicXlit",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "N6: CTranslate2 NLLB INT8",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N5: IndicXlit": {
+            "main": [
+                [
+                    {
+                        "node": "N6: CTranslate2 NLLB INT8",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N6: CTranslate2 NLLB INT8": {
+            "main": [
+                [
+                    {
+                        "node": "N7: Laya Classifier",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N7: Laya Classifier": {
+            "main": [
+                [
+                    {
+                        "node": "H1: Emergency Red Flag",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "H2: Postgres Query",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "H3: ICMR RAG Retriever",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "H4: In-Memory Vector DB (Chroma/Qdrant)",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "H5: Direct Core Triage",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N8: Attachment Type": {
+            "main": [
+                [
+                    {
+                        "node": "N9: PyMuPDF Parser",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "N10: Qwen VLM Vision",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N10: Qwen VLM Vision": {
+            "main": [
+                [
+                    {
+                        "node": "N11: Lexicon Matcher",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "H1: Emergency Red Flag": {
+            "main": [
+                [
+                    {
+                        "node": "N13: CTranslate2 Reverse",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "H2: Postgres Query": {
+            "main": [
+                [
+                    {
+                        "node": "C1: Context Synthesizer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "H3: ICMR RAG Retriever": {
+            "main": [
+                [
+                    {
+                        "node": "C1: Context Synthesizer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "H4: In-Memory Vector DB (Chroma/Qdrant)": {
+            "main": [
+                [
+                    {
+                        "node": "C1: Context Synthesizer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "H5: Direct Core Triage": {
+            "main": [
+                [
+                    {
+                        "node": "C1: Context Synthesizer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N9: PyMuPDF Parser": {
+            "main": [
+                [
+                    {
+                        "node": "C1: Context Synthesizer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N11: Lexicon Matcher": {
+            "main": [
+                [
+                    {
+                        "node": "C1: Context Synthesizer",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "C1: Context Synthesizer": {
+            "main": [
+                [
+                    {
+                        "node": "N12: AarogyaMitra Qwen LLM",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N12: AarogyaMitra Qwen LLM": {
+            "main": [
+                [
+                    {
+                        "node": "N13: CTranslate2 Reverse",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "N13: CTranslate2 Reverse": {
+            "main": [
+                [
+                    {
+                        "node": "N14: Meta MMS VITS ONNX (TTS)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "mermaid-converted"
+}
