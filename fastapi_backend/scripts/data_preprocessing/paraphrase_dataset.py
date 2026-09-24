@@ -1,301 +1,238 @@
-import os
-import sys
 import csv
-import re
 import random
 from pathlib import Path
+import sys
 
 backend_dir = Path(r"D:\MCA Sage Uni\Semester-3\Project Ideas\ArogyaMitra\fastapi_backend")
-dataset_file = backend_dir / "datasets" / "fine-tuning" / "laya_intent_classification_synthetic_dataset.csv"
+output_file = backend_dir / "datasets" / "fine-tuning" / "laya_intent_classification_synthetic_dataset.csv"
 
-sys.stdout.reconfigure(encoding="utf-8") if hasattr(sys.stdout, "reconfigure") else None
+# ---------------------------------------------------------
+# Dynamic Components for Human-like Synthetic Generation
+# Laya AI receives English inputs ONLY (post translation).
+# ---------------------------------------------------------
 
-# Realistic natural human phrasing templates per class across 4 distinct styles:
-# Style A: Ultra-short search keyword
-# Style B: Conversational Hinglish
-# Style C: Natural Voice-STT phrasing
-# Style D: Detailed rural patient description
-
-VARIATIONS_CLASS_1 = [ # EMERGENCY_CRITICAL
-    # Ultra short
-    "chest pain 108 ambulance urgent",
-    "snake bite leg bleeding emergency",
-    "accident highway patient unconscious",
-    "pesticide poison vomiting urgent doctor",
-    "electric shock patient pulse missing",
-    "child choking breath stop urgent",
-    "head trauma bleeding ears accident",
-    "heart attack left arm pain emergency",
-    # Hinglish
-    "bhaiya jaldi 108 ambulance bhejo mere dada ko bahot tez chest pain ho raha hai!",
-    "khet me saap ne kaat liya hai leg me bahot sujan aur khoon beh raha hai kya kare!",
-    "highway par car accident ho gaya hai ek banda unconscious hai jaldi help karo!",
-    "chote bache ne kanch ki goli nigal li hai usse saans nahi aa rahi!",
-    "kisaan ne accidentally keetnashak pee liya hai ulti aur jhaag nikal raha hai!",
-    "bijli ka jhatka laga hai aadmi behosh hai dhadkan nahi chal rahi!",
-    "pregnant aurat ko achanak bahot tez pet dard aur heavy bleeding ho rahi hai!",
-    "chhat se girne se sar me gambhir chot aayi hai kaan se khoon aa raha hai!",
-    # Voice-STT
-    "hello emergency... mera bhai accident me behosh ho gaya hai ambulance chahiye gwalior highway par",
-    "sir turant bataiye saap kaatne par pehla ilaj kya kare khoon ruk nahi raha",
-    "urgently medical help chahiye mere papa ko severe heart attack aaya hai sweating ho rahi hai",
-    "bacha saans nahi le pa raha hai choking ho raha hai emergency guidance do",
-    # Detailed
-    "A 55-year-old farmer collapsed in the field with sudden severe crushing chest pain, sweating, and difficulty breathing. Immediate emergency response needed.",
-    "Road trauma accident victim lying unresponsive near Shivpuri bypass with severe head lacerations and arterial bleeding."
+OPENERS = [
+    "", "", "", "", "", # 50% chance of no opener
+    "Please tell me ", "I want to know ", "Doctor ", "Help me ", 
+    "Can you say ", "My ", "Listen ", "Urgently need to know "
 ]
 
-VARIATIONS_CLASS_2 = [ # FACILITY_LOCATOR
-    # Ultra short
-    "nearest phc shivpuri location",
-    "jan aushadhi kendra wardha contact",
-    "blood bank o negative bhopal",
-    "24/7 govt hospital icu gwalior",
-    "free diagnostic lab near me",
-    "pmjbp store pin 440003",
-    "chc hospital vidisha address",
-    "trauma center nh44 location",
-    # Hinglish
-    "bhaiya sabse paas wala primary health center (PHC) kaha hai shivpuri me?",
-    "wardha me jan aushadhi kendra ka address aur phone number milega kya?",
-    "bhopal me o negative blood availability kis blood bank me hai?",
-    "gwalior civil lines ke paas koi free govt hospital ya phc hai kya?",
-    "pin code 462001 ke paas koi janaushadhi kendra khula hai abhi?",
-    "vidisha me nearest community health center (CHC) ka location batao",
-    "ayushman card accept karne wala nearest hospital konsa hai jabalpur me?",
-    "raat ko 24 ghante khula rehne wala emergency hospital paas me kaha hai?",
-    # Voice-STT
-    "hello... mujhe mere ghar ke paas jan aushadhi medical store dhoondna hai contact number dedo",
-    "bhopal me kis sarkari hospital me icu bed khali hai abhi turant jana hai",
-    "near me blood bank me a positive blood mil jayega kya jaldi batao",
-    "shivpuri district hospital me digital x-ray facility hai kya",
-    # Detailed
-    "Where is the nearest Primary Health Center or District Civil Hospital in Shivpuri with functioning emergency pediatric care?",
-    "Looking for a list of government empanelled hospitals near Gwalior Civil Lines that accept Ayushman Bharat e-cards."
+# --- CLASS 1: EMERGENCY_CRITICAL ---
+C1_SYMPTOMS = [
+    "severe chest pain", "heart attack", "crushing pain in chest", 
+    "left arm going numb", "snake bite", "snake bit my leg", 
+    "profuse bleeding", "heavy blood loss", "major accident", 
+    "unconscious", "fainted and not waking up", "pesticide poisoning", 
+    "drank poison", "choking", "cannot breathe", "severe electric shock", 
+    "head injury", "bleeding from ear", "sudden extreme stomach pain in pregnancy"
+]
+C1_ACTIONS = [
+    "need ambulance", "call 108", "send help", "urgent help needed", 
+    "what to do right now", "save him", "emergency", "send ambulance fast"
 ]
 
-VARIATIONS_CLASS_3 = [ # GOVT_SCHEME_ELIGIBILITY
-    # Ultra short
-    "ayushman bharat eligibility bpl card",
-    "pmjay 5 lakh coverage rules",
-    "abha health id documents aadhaar",
-    "janani suraksha yojana free delivery mp",
-    "pmssy scheme hospital list",
-    "ayushman card registration process",
-    "bpl vs apl health scheme limit",
-    "mukhyamantri amrutam yojna benefits",
-    # Hinglish
-    "bhaiya bpl ration card par ayushman bharat me 5 lakh ka ilaj free milega kya?",
-    "abha digital health id card banane ke liye konsa document lagta hai?",
-    "janani suraksha yojana me sarkari hospital me delivery ke baad kitna paisa milta hai mp me?",
-    "pm-jay health card me purani bimari jaise heart surgery cover hoti hai kya?",
-    "ayushman card online mobile se kaise banaye mera aur meri family ka?",
-    "kya apl card holder ko bhi sarkari swasthya bima yojana ka fayda milta hai?",
-    "ayushman card se private hospital me bina paise diye ilaj ho sakta hai kya?",
-    "mukhyamantri amrutam yojna me registration karne ki last date kya hai?",
-    # Voice-STT
-    "bhaiya thoda samjha do na ayushman bharat me eligibility check kaise karte hain",
-    "abha card banane ke liye aadhaar card ke alawa aur kya kagaz chahiye",
-    "janani suraksha yojana ka cash benefit account me kab tak aata hai",
-    "pm-jay scheme me 5 lakh rupaye per family milta hai ya per person",
-    # Detailed
-    "What are the official eligibility guidelines, family income thresholds, and required documentation to register for the Ayushman Bharat PM-JAY scheme in Madhya Pradesh?",
-    "How can a rural BPL family claim cashless hospitalization coverage for heart surgery under the state health protection mission?"
+def gen_c1():
+    s = random.choice(C1_SYMPTOMS)
+    a = random.choice(C1_ACTIONS)
+    style = random.choice(["short", "urgent", "descriptive", "broken"])
+    if style == "short":
+        return f"{s} {a}"
+    elif style == "urgent":
+        return f"{a}! {s}!"
+    elif style == "descriptive":
+        return f"My grandfather has {s}. We {a}."
+    else: 
+        return f"{s} happening. {a} please."
+
+# --- CLASS 2: FACILITY_LOCATOR ---
+C2_FACILITIES = [
+    "Jan Aushadhi Kendra", "PMBJP store", "government hospital", 
+    "PHC", "Primary Health Center", "CHC", "Community Health Center", 
+    "blood bank", "free lab", "diagnostic center", "trauma center", "ICU bed"
+]
+C2_LOCATIONS = [
+    "near me", "in Wardha", "near civil lines", "in Bhopal", 
+    "near PIN 440003", "in Gwalior", "in Shivpuri", "in my village"
+]
+C2_INTENTS = [
+    "Where is the nearest", "Find", "Location of", "Contact number for", 
+    "Is there any", "Show me", "I am looking for"
 ]
 
-VARIATIONS_CLASS_4 = [ # MEDICINE_GENERIC_SEARCH
-    # Ultra short
-    "dolo 650 generic substitute price",
-    "telmisartan 40 jan aushadhi salt",
-    "clavam 625 cheap alternative name",
-    "metformin 500 dose after food",
-    "atorvastatin 10mg side effects",
-    "prescription tab azithro 500 od meaning",
-    "pantoprazole 40 empty stomach rule",
-    "cetirizine pregnancy safe or not",
-    # Hinglish
-    "dolo 650 ki jagah jan aushadhi me konsi sasti generic dawa milti hai aur kitne ki hai?",
-    "doctor ne clavam 625 likhi hai iska sasta sarkari generic salt name batao",
-    "metformin 500mg ki tablet khana khane ke baad leni chahiye ya pehle?",
-    "atorvastatin 10mg khane se koi side effect hota hai kya jaise muscle pain?",
-    "doctor ke parche par likha hai 'Tab Azithro 500 OD x 3 days', iska kya matlab hai?",
-    "pantoprazole 40mg subah khali pet lena zaroori hai kya?",
-    "kya cetirizine allergy ki goli pregnancy me lena safe hai?",
-    "paracetamol 650 ka ek din me maximum kitna dose le sakte hain?",
-    # Voice-STT
-    "bhaiya doctor ne pantocid likha hai iska jan aushadhi me sasta option bata do",
-    "sugar ki goli glycomet 500 raat ko khane ke baad le sakte hain kya",
-    "doctor ke prescription par OD aur BD ka matlab kya hota hai",
-    "generic paracetamol 650 aur dolo 650 ke price me kitna farak hai",
-    # Detailed
-    "What is the exact pharmacological generic active salt name for Clavam 625, and what is its price comparison at Pradhan Mantri Jan Aushadhi Kendra?",
-    "My doctor prescribed Azithromycin 500mg once daily for 3 days; what are the administration guidelines and common side effects?"
+def gen_c2():
+    f = random.choice(C2_FACILITIES)
+    l = random.choice(C2_LOCATIONS)
+    i = random.choice(C2_INTENTS)
+    style = random.choice(["question", "command", "short", "broken"])
+    if style == "question":
+        return f"{i} {f} {l}?"
+    elif style == "command":
+        return f"Give me the address of a {f} {l}."
+    elif style == "short":
+        return f"nearest {f} {l}"
+    else:
+        return f"{f} {l} where is it"
+
+# --- CLASS 3: GOVT_SCHEME_ELIGIBILITY ---
+C3_SCHEMES = [
+    "Ayushman Bharat", "PM-JAY", "ABHA health ID", 
+    "Janani Suraksha Yojana", "State health scheme", "BPL medical scheme"
+]
+C3_TOPICS = [
+    "eligibility", "documents required", "free treatment", 
+    "5 lakh coverage", "apply online", "benefits", "hospital list"
 ]
 
-VARIATIONS_CLASS_5 = [ # SYMPTOM_TRIAGE_REMEDY
-    # Ultra short
-    "mild chest burning home remedy",
-    "child 102f fever cold advice",
-    "dry cough sore throat remedy",
-    "joint pain dengue chikungunya symptom",
-    "diabetes diet rural indian food",
-    "headache natural remedy water",
-    "typhoid fever early signs",
-    "loose motion child ors zinc",
-    # Hinglish
-    "do din se khana khane ke baad halki छाती me jalan ho rahi hai koi ghar ka nuskha batao",
-    "mere 5 saal ke bache ko subah se 102 fever aur thand lag rahi hai kya kare?",
-    "sukhi khansi aur gale me kharash ke liye konsa safe desi ilaj kare?",
-    "jodon me dard aur body par red rash hain, kya ye dengue ya chikungunya ho sakta hai?",
-    "gaav me rehne wale diabetic patient ko blood sugar control karne ke liye kya khana chahiye?",
-    "sar me dard ho raha hai halka halka, doctor ke paas jana zaroori hai ya ghar pe theek ho jayega?",
-    "typhoid bukhar ke shuruaati lakshan kya hote hain aur test kab karaye?",
-    "bache ko loose motion ho gaya hai, ors ghul aur zinc ki goli kaise de?",
-    # Voice-STT
-    "doctor sahab mere bete ko subah se bukhar hai aur khansi aa rahi hai pehla ilaj kya kare",
-    "gale me kharash aur khansi ke liye garam paani aur haldi wala doodh pee sakte hain kya",
-    "dengue bukhar me platelet badhane ke liye ghar me kya khana chahiye",
-    "pet me dard aur ulti ho rahi hai ghar pe kya kare ilaj",
-    # Detailed
-    "A 40-year-old adult experiencing mild post-prandial heartburn and acid reflux for 2 days without red-flag cardiac symptoms. What are the ICMR-approved dietary home remedies?",
-    "My 6-year-old child has a 101F fever and dry cough since yesterday. What baseline triage protocol and hydration measures should I follow at home?"
+def gen_c3():
+    s = random.choice(C3_SCHEMES)
+    t = random.choice(C3_TOPICS)
+    style = random.choice(["question", "scenario", "short", "broken"])
+    if style == "question":
+        return f"Am I eligible for {s} if I have a BPL card?"
+    elif style == "scenario":
+        return f"I need to know the {t} for {s}."
+    elif style == "short":
+        return f"{s} {t}"
+    else:
+        return f"how to get {t} in {s}"
+
+# --- CLASS 4: MEDICINE_GENERIC_SEARCH ---
+C4_DRUGS = [
+    "Paracetamol 650", "Dolo 650", "Telmisartan 40", "Clavam 625", 
+    "Metformin 500", "Atorvastatin 10mg", "Azithromycin 500", "Pantoprazole 40", 
+    "Cetirizine"
+]
+C4_TOPICS = [
+    "generic substitute", "cheap alternative", "Jan Aushadhi price", 
+    "side effects", "dosage", "when to take", "after food or empty stomach", 
+    "safe during pregnancy"
 ]
 
-VARIATIONS_CLASS_6 = [ # OUT_OF_SCOPE_GENERAL
-    # Ultra short
-    "namaste who are you",
-    "how to change language marathi",
-    "thank you arogyamitra",
-    "weather forecast indore today",
-    "cricket match score india",
-    "tell a doctor joke",
-    "capital of madhya pradesh",
-    "python code sorting array",
-    # Hinglish
-    "namaste arogyamitra, aap kaun ho aur meri kya help kar sakte ho?",
-    "bhaiya app me bolne ki bhasha marathi ya tamil me kaise badle?",
-    "bahot bahot dhanyawad aapki madad ke liye!",
-    "aaj indore me barish hogi kya mausam kaisa hai?",
-    "kal ka cricket match kaun jeeta india ya australia?",
-    "mujhe ek accha doctor wala joke sunao na",
-    "madhya pradesh ki rajdhani konsi hai?",
-    "python me list ko sort karne ka code likh kar do",
-    # Voice-STT
-    "hello arogyamitra namaste... tum kya kya bata sakte ho mujhe",
-    "bhasha hindi se marathi me kaise change kare batao",
-    "thank you so much bhai tumne bahot acchi jankari di",
-    "aaj bhopal me temperature kitna hai",
-    # Detailed
-    "Namaste! Can you please introduce yourself and explain all the healthcare support services available on ArogyaMitra?",
-    "How can I toggle the speech synthesis output voice from Hindi to Marathi or Telugu in the settings?"
+def gen_c4():
+    d = random.choice(C4_DRUGS)
+    t = random.choice(C4_TOPICS)
+    style = random.choice(["prescription", "question", "short", "broken"])
+    if style == "prescription":
+        return f"Doctor prescribed {d}. What is its {t}?"
+    elif style == "question":
+        return f"What is the {t} for {d}?"
+    elif style == "short":
+        return f"{d} {t}"
+    else:
+        return f"{t} of {d} tell me"
+
+# --- CLASS 5: SYMPTOM_TRIAGE_REMEDY ---
+C5_SYMPTOMS = [
+    "mild fever", "102F fever", "dry cough", "sore throat", 
+    "joint pain", "morning stiffness", "stomach ache", "loose motion", 
+    "headache", "eye strain", "chest burning after food", "red rash"
+]
+C5_CONTEXTS = [
+    "in my 5-year-old child", "since yesterday", "for the last two days", 
+    "after eating outside food", "in the morning", "with chills"
+]
+C5_REQUESTS = [
+    "home remedy", "what should I do", "which medicine to take", 
+    "do I need a doctor", "natural cure", "diet advice"
 ]
 
-CLASS_HUMANIZERS = {
-    "EMERGENCY_CRITICAL": VARIATIONS_CLASS_1,
-    "FACILITY_LOCATOR": VARIATIONS_CLASS_2,
-    "GOVT_SCHEME_ELIGIBILITY": VARIATIONS_CLASS_3,
-    "MEDICINE_GENERIC_SEARCH": VARIATIONS_CLASS_4,
-    "SYMPTOM_TRIAGE_REMEDY": VARIATIONS_CLASS_5,
-    "OUT_OF_SCOPE_GENERAL": VARIATIONS_CLASS_6
-}
+def gen_c5():
+    s = random.choice(C5_SYMPTOMS)
+    c = random.choice(C5_CONTEXTS)
+    r = random.choice(C5_REQUESTS)
+    style = random.choice(["descriptive", "question", "short", "broken"])
+    if style == "descriptive":
+        return f"I have {s} {c}. Please suggest a {r}."
+    elif style == "question":
+        return f"What is the best {r} for {s}?"
+    elif style == "short":
+        return f"{s} {r}"
+    else:
+        return f"{s} {c} {r} please"
 
-def is_templated_row(text: str) -> bool:
-    """Returns True if the text contains artificial template suffixes or unnatural patterns."""
-    patterns = [
-        r"variant\s*\d+",
-        r"inquiry\s*\d+",
-        r"item\s*\d+",
-        r"case\s*\d+",
-        r"Pharmacology query:",
-        r"Clinical symptom triage",
-        r"Show location map for",
-        r"What is the eligibility criteria and claim procedure for",
-        r"What is the recommended dosage for Ibuprofen",
-        r"Find blood bank with B positive blood in Jabalpur city"
-    ]
-    for p in patterns:
-        if re.search(p, text, re.IGNORECASE):
-            return True
-    return False
+# --- CLASS 6: OUT_OF_SCOPE_GENERAL ---
+C6_GREETINGS = ["Hello", "Hi", "Namaste", "Good morning", "Thank you"]
+C6_QUESTIONS = [
+    "who are you", "what can you do", "how to change language", 
+    "are you a doctor", "how does this app work"
+]
+C6_OFF_TOPIC = [
+    "what is the weather today", "who won the cricket match", 
+    "tell me a joke", "what is the capital of India", "how to cook biryani"
+]
+
+def gen_c6():
+    style = random.choice(["greeting", "app_question", "off_topic", "mixed"])
+    if style == "greeting":
+        return random.choice(C6_GREETINGS)
+    elif style == "app_question":
+        return f"{random.choice(C6_GREETINGS)}, {random.choice(C6_QUESTIONS)}?"
+    elif style == "off_topic":
+        return random.choice(C6_OFF_TOPIC)
+    else:
+        return f"{random.choice(C6_QUESTIONS)}?"
+
+def apply_opener(text):
+    op = random.choice(OPENERS)
+    if op and not text.lower().startswith(("what", "where", "how", "is", "can", "am", "do")):
+        if random.random() > 0.3 and text[0].isupper():
+            text = text[0].lower() + text[1:]
+        return op + text
+    return text
+
+def generate_dataset():
+    dataset = []
+    classes = {
+        "EMERGENCY_CRITICAL": gen_c1,
+        "FACILITY_LOCATOR": gen_c2,
+        "GOVT_SCHEME_ELIGIBILITY": gen_c3,
+        "MEDICINE_GENERIC_SEARCH": gen_c4,
+        "SYMPTOM_TRIAGE_REMEDY": gen_c5,
+        "OUT_OF_SCOPE_GENERAL": gen_c6
+    }
+    
+    for cls, gen_func in classes.items():
+        seen = set()
+        attempts = 0
+        while len(seen) < 200 and attempts < 10000:
+            text = gen_func()
+            text = apply_opener(text)
+            
+            # Simulate speech-to-text / translation errors (lowercase, missing punctuation)
+            if random.random() > 0.6:
+                text = text.replace("?", "").replace(".", "")
+            if random.random() > 0.8:
+                text = text.lower()
+                
+            text = text.strip()
+            if text and text.lower() not in [x.lower() for x in seen]:
+                seen.add(text)
+            attempts += 1
+            
+        for text in list(seen)[:200]:
+            dataset.append({"text": text, "label": cls})
+            
+    return dataset
 
 def main():
-    print("=== DATASET PARAPHRASING & HUMANIZATION PREPROCESSOR ===")
+    print("Generating pure English natural dataset...", flush=True)
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    dataset = generate_dataset()
+    random.shuffle(dataset)
     
-    if not dataset_file.exists():
-        print(f"Error: Dataset file not found at {dataset_file}")
-        return
-
-    with open(dataset_file, "r", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
-
-    print(f"Loaded existing dataset: {len(rows)} rows.")
-    
-    # Categorize existing rows
-    by_class = {}
-    for r in rows:
-        label = r["label"]
-        text = r["text"].strip()
-        by_class.setdefault(label, []).append(text)
-
-    new_dataset = []
-    
-    for label, texts in by_class.items():
-        pool = CLASS_HUMANIZERS.get(label, [])
-        authentic_texts = []
-        
-        # Keep authentic non-templated texts
-        for t in texts:
-            if not is_templated_row(t):
-                authentic_texts.append(t)
-                
-        print(f"Class [{label}]: Retained {len(authentic_texts)} authentic seed queries. Replacing {len(texts) - len(authentic_texts)} templated rows.")
-        
-        # Mix authentic texts with rich natural human variations to reach exactly 200
-        combined = list(authentic_texts)
-        
-        # Shuffle pool to get maximum diversity across 4 styles
-        shuffled_pool = list(pool)
-        random.shuffle(shuffled_pool)
-        
-        pool_idx = 0
-        while len(combined) < 200:
-            if pool_idx < len(shuffled_pool):
-                candidate = shuffled_pool[pool_idx]
-                pool_idx += 1
-            else:
-                # Cycle through pool with subtle realistic prefix/suffix variations
-                base = pool[pool_idx % len(pool)]
-                var_style = pool_idx % 4
-                if var_style == 0:
-                    candidate = f"please tell me {base.lower()}"
-                elif var_style == 1:
-                    candidate = f"{base} please help"
-                elif var_style == 2:
-                    candidate = f"bhai {base.lower()}"
-                else:
-                    candidate = f"doctor sahab {base.lower()}"
-                pool_idx += 1
-                
-            if candidate not in combined:
-                combined.append(candidate)
-                
-        # Trim to exactly 200
-        combined = combined[:200]
-        for t in combined:
-            new_dataset.append({"text": t, "label": label})
-
-    # Overwrite the existing dataset CSV directly
-    with open(dataset_file, "w", newline="", encoding="utf-8") as f:
+    with open(output_file, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=["text", "label"])
         writer.writeheader()
-        writer.writerows(new_dataset)
-
-    print(f"\n==================================================")
-    print(f"PARAPHRASING COMPLETE & DATASET OVERWRITTEN SUCCESSFUL!")
-    print(f"File Path: {dataset_file}")
-    print(f"Total Rows: {len(new_dataset)} (Exactly 200 per class across 6 classes)")
-    print(f"Variability Styles Included: Ultra-Short Keywords, Hinglish, Voice-STT Speech, Detailed Clinical Scenarios.")
-    print(f"==================================================")
-
+        writer.writerows(dataset)
+        
+    counts = {}
+    for row in dataset:
+        counts[row["label"]] = counts.get(row["label"], 0) + 1
+        
+    print("\nDataset Generation Complete!", flush=True)
+    print(f"Total Rows: {len(dataset)}", flush=True)
+    for k, v in counts.items():
+        print(f"  {k}: {v}", flush=True)
+        
 if __name__ == "__main__":
     main()
