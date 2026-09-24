@@ -1,0 +1,56 @@
+[
+  {
+    "test_name": "Hinglish Romanized Input",
+    "input_text": "mujhe pichle 3 dino se tez bukhar aur sirdard hai",
+    "detected_lang": "eng_Latn",
+    "native_lang_code": "eng_Latn",
+    "transliterated_text": "mujhe pichle 3 dino se tez bukhar aur sirdard hai",
+    "english_prompt": "mujhe pichle 3 dino se tez bukhar aur sirdard hai",
+    "english_response": "I understand your situation. Here are safety cautions and first-aid steps for fever: Check temperature, avoid giving antipyretics if the body is below 35 degrees C, ensure proper hydration, and seek medical help immediately if necessary.",
+    "final_response": "I understand your situation. Here are safety cautions and first-aid steps for fever: Check temperature, avoid giving antipyretics if the body is below 35 degrees C, ensure proper hydration, and seek medical help immediately if necessary.",
+    "latency": {
+      "step1_indic_lid": 0.0,
+      "step2_transliteration": 0.0,
+      "step3_input_trans": 0.0,
+      "step4_qwen_llm": 8.467,
+      "step5_output_trans": 0.0,
+      "total_seconds": 8.467
+    }
+  },
+  {
+    "test_name": "Native Bengali Input",
+    "input_text": "আমার গত ৩ দিন ধরে খুব জ্বর এবং মাথা ব্যথা হচ্ছে।",
+    "detected_lang": "ben_Beng",
+    "native_lang_code": "ben_Beng",
+    "transliterated_text": "আমার গত ৩ দিন ধরে খুব জ্বর এবং মাথা ব্যথা হচ্ছে।",
+    "english_prompt": "I've had a fever and a headache for the past three days.",
+    "english_response": "Thank you for sharing your current symptoms (fever and headache for the past three days). It is recommended to rest, stay well hydrated, and visit a nearby primary health center or clinic for a physical examination.",
+    "final_response": "আপনার সাম্প্রতিক লক্ষণগুলি (গত তিন দিন ধরে জ্বর এবং মাথাব্যথা) শেয়ার করার জন্য আপনাকে ধন্যবাদ। বিশ্রাম নেওয়ার, হাইড্রেটেড থাকার এবং শারীরিক পরীক্ষা করার জন্য নিকটবর্তী প্রাথমিক স্বাস্থ্য কেন্দ্র বা ক্লিনিক পরিদর্শন করার পরামর্শ দেওয়া হয়।",
+    "latency": {
+      "step1_indic_lid": 0.0,
+      "step2_transliteration": 0.0,
+      "step3_input_trans": 0.981,
+      "step4_qwen_llm": 4.381,
+      "step5_output_trans": 3.65,
+      "total_seconds": 9.012
+    }
+  },
+  {
+    "test_name": "Pure English Input",
+    "input_text": "What are 3 symptoms of viral fever?",
+    "detected_lang": "eng_Latn",
+    "native_lang_code": "eng_Latn",
+    "transliterated_text": "What are 3 symptoms of viral fever?",
+    "english_prompt": "What are 3 symptoms of viral fever?",
+    "english_response": "Viral fever typically presents with three main symptoms: sudden onset chills, headache, muscle aches, and fatigue. It may also progress to high fevers (over 104°F) or persistent coughing.\n\n• Treatment is supportive, so visit a hospital only if you have severe pain, difficulty breathing, or confusion.",
+    "final_response": "Viral fever typically presents with three main symptoms: sudden onset chills, headache, muscle aches, and fatigue. It may also progress to high fevers (over 104°F) or persistent coughing.\n\n• Treatment is supportive, so visit a hospital only if you have severe pain, difficulty breathing, or confusion.",
+    "latency": {
+      "step1_indic_lid": 0.0,
+      "step2_transliteration": 0.0,
+      "step3_input_trans": 0.0,
+      "step4_qwen_llm": 6.961,
+      "step5_output_trans": 0.0,
+      "total_seconds": 6.961
+    }
+  }
+]

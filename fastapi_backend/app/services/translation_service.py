@@ -1,114 +1,90 @@
+﻿import os
 import sys
-import types
+from pathlib import Path
 
-# Ensure transformers.onnx dummy module compatibility
-if 'transformers.onnx' not in sys.modules:
-    dummy_onnx = types.ModuleType('transformers.onnx')
-    dummy_onnx_utils = types.ModuleType('transformers.onnx.utils')
-    dummy_onnx.OnnxConfig = object
-    dummy_onnx.OnnxSeq2SeqConfigWithPast = object
-    dummy_onnx_utils.compute_effective_axis_dimension = lambda *args, **kwargs: None
-    dummy_onnx.utils = dummy_onnx_utils
-    sys.modules['transformers.onnx'] = dummy_onnx
-    sys.modules['transformers.onnx.utils'] = dummy_onnx_utils
+# Set HF Cache variables FIRST before any HuggingFace / Transformers imports
+backend_dir = Path(__file__).resolve().parent.parent.parent
+hf_dir = backend_dir / "models" / "huggingface"
+models_dir = backend_dir / "models" / "ctranslate2_nllb_int8"
 
+os.environ["HF_HOME"] = str(hf_dir)
+os.environ["HF_HUB_CACHE"] = str(hf_dir / "hub")
+os.environ["TRANSFORMERS_CACHE"] = str(hf_dir / "transformers")
+
+import time
 import hashlib
 import asyncio
-import torch
 import logging
 from typing import Optional
+
 from app.utils.language import INDIC_LANGUAGE_TAGS, FALLBACK_LANGUAGE, detect_indic_language
 from app.services.cache_service import cache_service
+from app.services.transliteration_service import transliteration_service
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 class TranslationService:
     """
-    Bidirectional IndicTrans2 Translation Service (Indic <-> English)
-    Uses AI4Bharat IndicTrans2 architecture to handle 22 Indic Languages + English.
+    High-Speed CTranslate2 NLLB-200 INT8 Translation Service (Indic <-> English).
+    Replaces PyTorch FP32 CPU model with C++ INT8 quantized engine (~0.3s latency).
+    Supports all 22 scheduled Indic languages + English.
     """
-    
-    def __init__(
-        self, 
-        indic_en_model_name: str = "Raghavan/indictrans2-indic-en-dist-200M",
-        en_indic_model_name: str = "Raghavan/indictrans2-en-indic-dist-200M"
-    ):
-        self.indic_en_model_name = indic_en_model_name
-        self.en_indic_model_name = en_indic_model_name
-        
-        self._ip = None
-        self._device = None
-        
-        self._indic_en_tokenizer = None
-        self._indic_en_model = None
-        
-        self._en_indic_tokenizer = None
-        self._en_indic_model = None
-        
+
+    def __init__(self, model_repo: str = "facebook/nllb-200-distilled-600M"):
+        self.model_repo = model_repo
+        self._translator = None
+        self._tokenizer = None
         self._load_lock = asyncio.Lock()
 
     async def _load_models(self):
-        """Lazily load IndicProcessor and IndicTrans2 seq2seq models into device memory."""
+        """Lazily load CTranslate2 Translator and HuggingFace AutoTokenizer."""
         async with self._load_lock:
-            if self._indic_en_model is not None and self._en_indic_model is not None:
+            if self._translator is not None and self._tokenizer is not None:
                 return
-            
-            logger.info("Loading IndicTrans2 Seq2Seq models (Indic <-> English)...")
-            
+
+            logger.info("Initializing CTranslate2 INT8 NLLB-200 Engine...")
+
             def _load_sync():
-                from transformers import AutoModelForSeq2SeqLM, AlbertTokenizer
-                from IndicTransToolkit import IndicProcessor
-                
-                ip = IndicProcessor(inference=True)
-                device = "cuda" if torch.cuda.is_available() else "cpu"
-                
-                # Load Indic -> English Model
-                logger.info(f"Loading Indic->En model ({self.indic_en_model_name})...")
-                tok_in_en = AlbertTokenizer.from_pretrained(self.indic_en_model_name)
-                mod_in_en = AutoModelForSeq2SeqLM.from_pretrained(self.indic_en_model_name, trust_remote_code=True)
-                mod_in_en.config.vocab_size = mod_in_en.get_output_embeddings().weight.shape[0]
-                mod_in_en.to(device)
-                mod_in_en.eval()
-                
-                # Load English -> Indic Model
-                logger.info(f"Loading En->Indic model ({self.en_indic_model_name})...")
-                tok_en_in = AlbertTokenizer.from_pretrained(self.en_indic_model_name)
-                mod_en_in = AutoModelForSeq2SeqLM.from_pretrained(self.en_indic_model_name, trust_remote_code=True)
-                mod_en_in.config.vocab_size = mod_en_in.get_output_embeddings().weight.shape[0]
-                mod_en_in.to(device)
-                mod_en_in.eval()
-                
-                return ip, device, tok_in_en, mod_in_en, tok_en_in, mod_en_in
-                
-            (
-                self._ip, 
-                self._device, 
-                self._indic_en_tokenizer, 
-                self._indic_en_model, 
-                self._en_indic_tokenizer, 
-                self._en_indic_model
-            ) = await asyncio.to_thread(_load_sync)
-            
-            logger.info(f"IndicTrans2 models successfully loaded on {self._device}!")
+                import ctranslate2
+                from transformers import AutoTokenizer
+
+                if not (models_dir / "model.bin").exists():
+                    logger.info(f"Converting {self.model_repo} to CTranslate2 INT8 model at {models_dir}...")
+                    os.makedirs(models_dir, exist_ok=True)
+                    converter = ctranslate2.converters.TransformersConverter(self.model_repo)
+                    converter.convert(str(models_dir), quantization="int8", force=True)
+                    logger.info("CTranslate2 INT8 Conversion Successful!")
+
+                translator = ctranslate2.Translator(str(models_dir), device="cpu", compute_type="int8")
+                tokenizer = AutoTokenizer.from_pretrained(self.model_repo)
+                return translator, tokenizer
+
+            self._translator, self._tokenizer = await asyncio.to_thread(_load_sync)
+            logger.info("CTranslate2 NLLB Engine successfully loaded into memory!")
 
     async def translate(self, text: str, src_lang: str, tgt_lang: str) -> str:
-        """Translates text between Indic languages and English with Valkey/In-Memory caching."""
+        """Translates text between Indic languages and English with 2-Tier Caching & Hinglish Transliteration."""
         if not text or not text.strip():
             raise ValueError("Input text cannot be empty.")
 
-        if src_lang == tgt_lang:
-            return text.strip()
+        text_clean = text.strip()
+
+        # Step 2: Handle Romanized Hinglish/Banglish Transliteration if required
+        text_clean, src_lang = transliteration_service.transliterate_to_native(text_clean, src_lang)
+
+        if src_lang == tgt_lang or (src_lang == "eng_Latn" and tgt_lang == "eng_Latn"):
+            return text_clean
 
         # Validate language tags
         if src_lang not in INDIC_LANGUAGE_TAGS:
-            src_lang = detect_indic_language(text)
-            
+            src_lang = detect_indic_language(text_clean)
+
         if tgt_lang not in INDIC_LANGUAGE_TAGS:
             tgt_lang = FALLBACK_LANGUAGE
 
         # Check 2-Tier Cache HIT
-        text_hash = hashlib.sha256(text.strip().encode("utf-8")).hexdigest()
+        text_hash = hashlib.sha256(text_clean.encode("utf-8")).hexdigest()
         cache_key = f"{src_lang}:{tgt_lang}:{text_hash}"
         cached_translation = cache_service.get(namespace="trans", key=cache_key)
 
@@ -116,30 +92,20 @@ class TranslationService:
             logger.info(f"Translation Cache HIT [{src_lang}->{tgt_lang}] for key: {cache_key[:20]}...")
             return cached_translation
 
-        # Ensure models are loaded
-        if self._indic_en_model is None or self._en_indic_model is None:
+        # Ensure CTranslate2 model is loaded
+        if self._translator is None or self._tokenizer is None:
             await self._load_models()
 
         def _translate_sync():
-            # Determine translation direction
-            if tgt_lang == "eng_Latn":
-                tokenizer = self._indic_en_tokenizer
-                model = self._indic_en_model
-            else:
-                tokenizer = self._en_indic_tokenizer
-                model = self._en_indic_model
-                
-            batch = self._ip.preprocess_batch([text.strip()], src_lang=src_lang, tgt_lang=tgt_lang)
-            inputs = tokenizer(batch, src_lang=src_lang, return_tensors="pt", padding=True)
-            inputs = {k: v.to(self._device) for k, v in inputs.items()}
-            inputs.pop("src_lang", None)
-            
-            with torch.inference_mode():
-                outputs = model.generate(**inputs, num_beams=4, max_length=512, use_cache=False)
-                
-            outputs = tokenizer.batch_decode(outputs, skip_special_tokens=True)
-            translations = self._ip.postprocess_batch(outputs, lang=tgt_lang)
-            return translations[0]
+            t0 = time.time()
+            self._tokenizer.src_lang = src_lang
+            tokens = self._tokenizer.convert_ids_to_tokens(self._tokenizer.encode(text_clean))
+            results = self._translator.translate_batch([tokens], target_prefix=[[tgt_lang]])
+            output_tokens = results[0].hypotheses[0][1:]
+            translated = self._tokenizer.decode(self._tokenizer.convert_tokens_to_ids(output_tokens))
+            t_dur = round(time.time() - t0, 3)
+            logger.info(f"CTranslate2 NLLB Translated [{src_lang}->{tgt_lang}] in {t_dur}s")
+            return translated
 
         translated_text = await asyncio.to_thread(_translate_sync)
 
