@@ -5,7 +5,7 @@
             "parameters": {},
             "id": "1000",
             "name": "N1: Webhook Trigger",
-            "type": "n8n-nodes-base.code",
+            "type": "n8n-nodes-base.webhook",
             "typeVersion": 2,
             "position": [
                 0,
@@ -18,7 +18,7 @@
             "parameters": {},
             "id": "1001",
             "name": "N2: MIME Switch",
-            "type": "n8n-nodes-base.code",
+            "type": "n8n-nodes-base.switch",
             "typeVersion": 2,
             "position": [
                 320,
@@ -83,7 +83,7 @@
             "parameters": {},
             "id": "1006",
             "name": "N7: Laya Classifier",
-            "type": "n8n-nodes-base.code",
+            "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
             "typeVersion": 2,
             "position": [
                 1920,
@@ -109,7 +109,7 @@
             "parameters": {},
             "id": "1008",
             "name": "H2: Postgres Query",
-            "type": "n8n-nodes-base.code",
+            "type": "n8n-nodes-base.postgres",
             "typeVersion": 2,
             "position": [
                 2240,
@@ -122,7 +122,7 @@
             "parameters": {},
             "id": "1009",
             "name": "H3: ICMR RAG Retriever",
-            "type": "n8n-nodes-base.code",
+            "type": "@n8n/n8n-nodes-langchain.retrieverVectorStore",
             "typeVersion": 2,
             "position": [
                 2240,
@@ -135,7 +135,7 @@
             "parameters": {},
             "id": "1010",
             "name": "H4: In-Memory Vector DB (Chroma/Qdrant)",
-            "type": "n8n-nodes-base.code",
+            "type": "@n8n/n8n-nodes-langchain.vectorStoreQdrant",
             "typeVersion": 2,
             "position": [
                 2240,
@@ -161,7 +161,7 @@
             "parameters": {},
             "id": "1012",
             "name": "N8: Attachment Type",
-            "type": "n8n-nodes-base.code",
+            "type": "n8n-nodes-base.switch",
             "typeVersion": 2,
             "position": [
                 640,
@@ -213,7 +213,7 @@
             "parameters": {},
             "id": "1016",
             "name": "C1: Context Synthesizer",
-            "type": "n8n-nodes-base.code",
+            "type": "n8n-nodes-base.merge",
             "typeVersion": 2,
             "position": [
                 2720,
@@ -226,7 +226,7 @@
             "parameters": {},
             "id": "1017",
             "name": "N12: AarogyaMitra Qwen LLM",
-            "type": "n8n-nodes-base.code",
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
             "typeVersion": 2,
             "position": [
                 3040,
