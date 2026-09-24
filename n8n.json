@@ -11,7 +11,7 @@
                 0,
                 0
             ],
-            "notes": "Webhook Trigger (WhatsApp / PWA Client)",
+            "notes": "Receive patient queries from WhatsApp / Web client.",
             "notesInFlow": true
         },
         {
@@ -24,7 +24,7 @@
                 320,
                 0
             ],
-            "notes": "MIME Switch (Payload Dispatcher)",
+            "notes": "MIME Check (Has Attachment?)\n- Text/Audio -> Track A\n- Image/PDF -> Track B",
             "notesInFlow": true
         },
         {
@@ -37,7 +37,7 @@
                 640,
                 -400
             ],
-            "notes": "IndicLID (Lang/Script Detect)",
+            "notes": "Language & Script Identification\ne.g., hin_Deva, hin_Latn",
             "notesInFlow": true
         },
         {
@@ -50,7 +50,7 @@
                 960,
                 -400
             ],
-            "notes": "Hinglish? (Latin Switch)",
+            "notes": "Check Script (Latin?)",
             "notesInFlow": true
         },
         {
@@ -63,7 +63,7 @@
                 1280,
                 -600
             ],
-            "notes": "IndicXlit (Transliteration to Native)",
+            "notes": "Transliteration\nRoman -> Native (e.g. Hinglish -> Hindi)",
             "notesInFlow": true
         },
         {
@@ -76,7 +76,7 @@
                 1600,
                 -400
             ],
-            "notes": "IndicTrans2 (Translate to Clinical Eng)",
+            "notes": "Translation\nNative -> English (Clinical Standard)",
             "notesInFlow": true
         },
         {
@@ -89,7 +89,7 @@
                 1920,
                 -400
             ],
-            "notes": "Laya Classifier (ModernBERT Intent Router)",
+            "notes": "Intent Classifier (DeBERTa/TinyBERT)\n- 6-way classification\n- Generates Intent + Confidence Score",
             "notesInFlow": true
         },
         {
@@ -102,7 +102,7 @@
                 2240,
                 -900
             ],
-            "notes": "Emergency Red Flag (Short-Circuit)",
+            "notes": "Emergency Handler (Immediate Response)\n- First-aid protocols\n- 108 / 102 helpline links\n- No LLM generation delay",
             "notesInFlow": true
         },
         {
@@ -115,7 +115,7 @@
                 2240,
                 -600
             ],
-            "notes": "Postgres Query (SQL OPD/Bed Lookup)",
+            "notes": "Postgres SQL DB\n- Hospital & bed availability\n- PIN code based search\n- Govt Scheme rules & eligibility",
             "notesInFlow": true
         },
         {
@@ -128,7 +128,7 @@
                 2240,
                 -300
             ],
-            "notes": "ICMR RAG Retriever (Vector Store search)",
+            "notes": "ICMR / MoHFW RAG\n- Medical guidelines retrieval\n- Grounded, evidence-based triage\n- Citations in response",
             "notesInFlow": true
         },
         {
@@ -141,7 +141,7 @@
                 2240,
                 0
             ],
-            "notes": "pgvector Search (Similarity Case History)",
+            "notes": "Vector Similarity Search\n- Generic drug substitutes\n- Jan Aushadhi Kendra pricing\n- Dosage rules & Side effects",
             "notesInFlow": true
         },
         {
@@ -154,7 +154,7 @@
                 2240,
                 300
             ],
-            "notes": "Direct Core Triage (Flag for core dialog)",
+            "notes": "Direct Response Engine\n- Chitchat & Greetings\n- Language change requests\n- App capabilities",
             "notesInFlow": true
         },
         {
@@ -167,7 +167,7 @@
                 640,
                 400
             ],
-            "notes": "Attachment Type (Media Router)",
+            "notes": "Check MIME Type\n- application/pdf\n- image/*",
             "notesInFlow": true
         },
         {
@@ -180,7 +180,7 @@
                 960,
                 200
             ],
-            "notes": "PyMuPDF Parser (Deterministic Tabular PDF)",
+            "notes": "PDF Parser\n- Extract tabular data (CBC, LFT, etc.)\n- Outputs Structured Lab Data (JSON)",
             "notesInFlow": true
         },
         {
@@ -193,7 +193,7 @@
                 960,
                 600
             ],
-            "notes": "Qwen VLM Vision (Transcription endpoint)",
+            "notes": "Prescription OCR (Qwen VLM)\n- Transcribe handwritten prescriptions",
             "notesInFlow": true
         },
         {
@@ -206,7 +206,7 @@
                 1280,
                 600
             ],
-            "notes": "Lexicon Matcher (Generic Salts Fuzzy)",
+            "notes": "Drug Name Matching (Fuzzy Lookup)\n- Indian Generic Lexicon mapping\n- Outputs Structured Prescription Data",
             "notesInFlow": true
         },
         {
@@ -219,7 +219,7 @@
                 2720,
                 0
             ],
-            "notes": "Context Synthesizer (Merge Context payloads)",
+            "notes": "Merge Context\n- Combines Intent Result + Document Data",
             "notesInFlow": true
         },
         {
@@ -232,7 +232,7 @@
                 3040,
                 0
             ],
-            "notes": "AarogyaMitra Qwen LLM (Q4_K_M localized triage)",
+            "notes": "AarogyaMitra Synthesis Engine (Qwen2.5-7B GGUF)\n- Structured Clinical Triage Report\n- Action steps & next care suggestions",
             "notesInFlow": true
         },
         {
@@ -245,7 +245,7 @@
                 3360,
                 0
             ],
-            "notes": "IndicTrans2 Reverse (English -> Native Script)",
+            "notes": "Translate to Patient Language\nEnglish -> Native Language",
             "notesInFlow": true
         },
         {
@@ -258,7 +258,7 @@
                 3680,
                 0
             ],
-            "notes": "Output Dispatcher (WhatsApp Graph API / PWA)",
+            "notes": "Output Dispatcher\n- Voice Synthesis (TTS)\n- Format Response (WhatsApp / PWA)",
             "notesInFlow": true
         },
         {
