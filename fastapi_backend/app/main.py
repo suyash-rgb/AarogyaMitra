@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 from contextlib import asynccontextmanager
 from typing import Annotated
 
@@ -25,8 +25,34 @@ from app.api.v1.endpoints.llm import router as llm_router
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager to eagerly initialize ML models and eliminate cold starts."""
+    logger.info("ArogyaMitra API Backend starting up...")
+    try:
+        from app.services.llm_service import get_llm_service
+        from app.services.translation_service import translation_service
+        from app.services.meta_mms_tts_service import meta_mms_tts_service
+        
+        logger.info("Pre-loading Qwen LLM model...")
+        get_llm_service()._initialize_model()
+        
+        logger.info("Pre-loading CTranslate2 NLLB Translation model...")
+        await translation_service._load_models()
+        
+        logger.info("Pre-loading Primary TTS ONNX models (Hindi/English)...")
+        await meta_mms_tts_service._load_model("hin")
+        await meta_mms_tts_service._load_model("eng")
+        
+        logger.info("All core ML models preloaded into memory successfully! Ready to serve.")
+    except Exception as e:
+        logger.warning(f"Note during model preloading in lifespan: {e}")
+    yield
+    logger.info("ArogyaMitra API Backend shutting down...")
+
 app = FastAPI(
-    title="ArogyaMitra API Backend"
+    title="ArogyaMitra API Backend",
+    lifespan=lifespan
 )
 
 # Enable CORS for frontend clients & Expo simulation
