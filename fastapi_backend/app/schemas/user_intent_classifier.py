@@ -1,8 +1,17 @@
-from pydantic import BaseModel, Field
+﻿from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 from enum import Enum
 
 class IntentEnum(str, Enum):
+    # 6-Class Fine-Tuned Laya Classifier Schema
+    EMERGENCY_CRITICAL = "EMERGENCY_CRITICAL"
+    FACILITY_LOCATOR = "FACILITY_LOCATOR"
+    GOVT_SCHEME_ELIGIBILITY = "GOVT_SCHEME_ELIGIBILITY"
+    MEDICINE_GENERIC_SEARCH = "MEDICINE_GENERIC_SEARCH"
+    OUT_OF_SCOPE_GENERAL = "OUT_OF_SCOPE_GENERAL"
+    SYMPTOM_TRIAGE_REMEDY = "SYMPTOM_TRIAGE_REMEDY"
+
+    # Legacy compatibility aliases
     GOVT_SCHEMES_DISCOVERY = "GOVT_SCHEMES_DISCOVERY"
     FACILITY_DISCOVERY = "FACILITY_DISCOVERY"
     GENERAL_MEDICAL_QA = "GENERAL_MEDICAL_QA"
@@ -32,3 +41,4 @@ class IntentResponse(BaseModel):
     translated_query: Optional[str] = None
     extracted_slots: ExtractedSlots
     response_data: Optional[Dict[str, Any]] = None
+

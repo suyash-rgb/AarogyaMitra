@@ -8,7 +8,7 @@ from app.db.session import get_session
 from app.schemas.user_intent_classifier import (
     IntentRequest, IntentResponse, IntentEnum, ExtractedSlots
 )
-from app.services.user_intent_classifier_service import intent_classifier_service
+from app.services.laya_service import laya_service
 from app.services.healthcare_schemes_service import HealthCareSchemesService
 from app.services.govt_healthcare_facility_service import GovtHealthcareFacilityService
 from app.services.translation_service import TranslationService
@@ -25,8 +25,9 @@ translation_service = TranslationService()
 @router.post("/classify", response_model=IntentResponse)
 async def classify_and_route_user_intent(
     req: IntentRequest,
-    db: AsyncSession = Depends(get_session)
-, deviceId: str = Query(..., description="Device ID")):
+    db: AsyncSession = Depends(get_session),
+    deviceId: str = Query(..., description="Device ID")
+):
     query = req.query.strip()
     if not query:
         raise HTTPException(
@@ -50,8 +51,8 @@ async def classify_and_route_user_intent(
     else:
         classification_text = query
 
-    # Step 2: Slot Extraction & Intent Classification
-    extracted_slots = intent_classifier_service.extract_slots(classification_text)
+    # Step 2: Slot Extraction & Laya AI Intent Classification
+    extracted_slots = laya_service.extract_slots(classification_text)
 
     # Merge context hints if provided in request
     if user_context:
@@ -60,16 +61,25 @@ async def classify_and_route_user_intent(
         if user_context.pincode and not extracted_slots.pincode:
             extracted_slots.pincode = user_context.pincode
 
-    intent, confidence, method = intent_classifier_service.classify_intent(classification_text)
+    intent, confidence, method = laya_service.classify_intent(classification_text)
 
     logger.info(f"Query: '{query}' -> Intent: {intent} (Confidence: {confidence}, Method: {method})")
 
-    # Step 3: Execute Target Service API
+    # Step 3: Execute Target Service API / Orchestration Handler
     response_data: Dict[str, Any] = {}
 
     try:
-        if intent == IntentEnum.GOVT_SCHEMES_DISCOVERY:
-            # Query schemes service
+        if intent in [IntentEnum.EMERGENCY_CRITICAL]:
+            response_data = {
+                "message": "EMERGENCY ALERT: For immediate medical emergencies, please call national emergency ambulance service 108 right away.",
+                "emergency_contacts": [
+                    {"title": "National Ambulance Service", "number": "108"},
+                    {"title": "Health Information Helpline", "number": "104"}
+                ],
+                "routing_target": "H1_EMERGENCY_RED_FLAG_DISPATCHER"
+            }
+
+        elif intent in [IntentEnum.GOVT_SCHEME_ELIGIBILITY, IntentEnum.GOVT_SCHEMES_DISCOVERY]:
             state_query = extracted_slots.state or (user_context.state if user_context else None)
             
             schemes_res = await schemes_service.get_schemes_paginated(
@@ -80,19 +90,17 @@ async def classify_and_route_user_intent(
                 limit=5
             )
             
-            # get_schemes_paginated returns a Pydantic model (HealthSchemePaginatedResponse)
-            # so we access attributes with dot notation or dict if it's a dict
             items = getattr(schemes_res, "items", []) if not isinstance(schemes_res, dict) else schemes_res.get("items", [])
             total = getattr(schemes_res, "total", 0) if not isinstance(schemes_res, dict) else schemes_res.get("total", 0)
             
             response_data = {
-                "message": f"Found matching government health schemes.",
+                "message": "Found matching government health schemes.",
                 "schemes": items,
-                "total": total
+                "total": total,
+                "routing_target": "H2_POSTGRES_SCHEMES_DB"
             }
 
-        elif intent == IntentEnum.FACILITY_DISCOVERY:
-            # Query healthcare facility service
+        elif intent in [IntentEnum.FACILITY_LOCATOR, IntentEnum.FACILITY_DISCOVERY]:
             state_val = extracted_slots.state or (user_context.state if user_context else None)
             pin_val = extracted_slots.pincode or (user_context.pincode if user_context else None)
             
@@ -109,20 +117,28 @@ async def classify_and_route_user_intent(
                 limit=5
             )
             response_data = {
-                "message": f"Found nearby healthcare facilities.",
+                "message": "Found nearby healthcare facilities.",
                 "facilities": getattr(facility_res, "items", []) if not isinstance(facility_res, dict) else facility_res.get("items", []),
-                "total": getattr(facility_res, "total", 0) if not isinstance(facility_res, dict) else facility_res.get("total", 0)
+                "total": getattr(facility_res, "total", 0) if not isinstance(facility_res, dict) else facility_res.get("total", 0),
+                "routing_target": "H2_POSTGRES_SPATIAL_FACILITY_DB"
             }
 
-        elif intent == IntentEnum.GREETING_CONVERSATIONAL:
+        elif intent in [IntentEnum.MEDICINE_GENERIC_SEARCH]:
             response_data = {
-                "message": "Namaste! I am ArogyaMitra, your AI healthcare assistant. How can I assist you with government health schemes or finding nearest medical facilities today?"
+                "message": "Searching generic medicine index and Jan Aushadhi Kendra availability...",
+                "routing_target": "H4_IN_MEMORY_GENERIC_MEDICINE_INDEX"
             }
 
-        elif intent == IntentEnum.GENERAL_MEDICAL_QA:
+        elif intent in [IntentEnum.SYMPTOM_TRIAGE_REMEDY, IntentEnum.GENERAL_MEDICAL_QA]:
             response_data = {
-                "message": "Directing your question to our AI Medical Advice Assistant...",
-                "routing_target": "GROQ_MEDICAL_RAG"
+                "message": "Directing your question to ICMR RAG & AI Medical Advice Assistant...",
+                "routing_target": "H3_ICMR_RAG_QWEN"
+            }
+
+        elif intent in [IntentEnum.OUT_OF_SCOPE_GENERAL, IntentEnum.GREETING_CONVERSATIONAL]:
+            response_data = {
+                "message": "Namaste! I am ArogyaMitra, your AI healthcare assistant for rural India. How can I help you today with finding hospitals, government schemes, medicine information, or symptom guidance?",
+                "routing_target": "H5_DIRECT_LIGHT_ENGINE"
             }
 
     except Exception as e:
