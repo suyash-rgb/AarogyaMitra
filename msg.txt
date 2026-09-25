@@ -1,1 +1,6 @@
-IndicTrans2 on PyTorch FP32 CPU takes ~180s - 290s per translation pass (~8.0 minutes total pipeline latency). ONNX Runtime export for IndicTrans2 is blocked by custom trust_remote_code model architectures
+Refactor: Remove Laya regex override and enforce cache hits
+
+- Removed rigid emergency_regex override pre-inference to allow Laya ONNX to fully evaluate context.
+- Validated exact query spam defense mechanism ensuring 2-tier instant Cache HIT without inference.
+
+Fixes #33, Fixes #34

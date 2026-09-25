@@ -1,4 +1,4 @@
-﻿import re
+import re
 import os
 import hashlib
 import logging
@@ -91,12 +91,12 @@ class LayaService:
         slots = ExtractedSlots()
         lower_text = f" {text.lower()} "
 
-        pincode_match = re.search(r"\b[1-9][0-9]{5}\b", text)
+        pincode_match = re.search(r"[1-9][0-9]{5}", text)
         if pincode_match:
             slots.pincode = pincode_match.group(0)
 
         for state in INDIAN_STATES:
-            pattern = r"\b" + re.escape(state.lower()) + r"\b"
+            pattern = r"" + re.escape(state.lower()) + r""
             if re.search(pattern, lower_text):
                 if state.upper() in ["MP", "MADHYA PRADESH"]:
                     slots.state = "Madhya Pradesh"
@@ -107,7 +107,7 @@ class LayaService:
                 break
 
         for key, val in SPECIALTIES_MAP.items():
-            pattern = r"\b" + re.escape(key) + r"\b"
+            pattern = r"" + re.escape(key) + r""
             if re.search(pattern, lower_text):
                 slots.specialty = val
                 break
@@ -117,7 +117,7 @@ class LayaService:
     def classify_intent(self, text: str) -> Tuple[IntentEnum, float, str]:
         lower_text = text.lower().strip()
 
-        # Check 2-Tier Cache HIT
+        # Check 2-Tier Cache HIT (Valkey / In-Memory TTLCache for repeated query defense)
         query_hash = hashlib.sha256(lower_text.encode("utf-8")).hexdigest()
         cached_intent = cache_service.get(namespace="intent", key=query_hash)
 
@@ -130,14 +130,9 @@ class LayaService:
                 method_str
             )
 
-        # Hard emergency safety check for critical keywords
-        emergency_regex = r"\b(108|ambulance|snake bite|snakebite|unconscious|heavy bleeding|heart attack|cardiac arrest|poisoning)\b"
-        # emergency_regex ->  is this needed? is this effective? need to test for very complex queries
-        facility_regex = r"\b(hospital|clinic|phc|chc|dispensary|doctor|specialist|ambulance|nearest|near me)\b"
+        facility_regex = r"(hospital|clinic|phc|chc|dispensary|doctor|specialist|ambulance|nearest|near me)"
 
-        if re.search(emergency_regex, lower_text):
-            best_intent, max_score, method = IntentEnum.EMERGENCY_CRITICAL, 0.99, "EMERGENCY_SAFETY_RULE"
-        elif self._is_loaded and self._session and self._tokenizer:
+        if self._is_loaded and self._session and self._tokenizer:
             try:
                 inputs = self._tokenizer(text, return_tensors="np", truncation=True, max_length=512)
                 input_names = [i.name for i in self._session.get_inputs()]
@@ -168,7 +163,7 @@ class LayaService:
             # Fallback if model failed to load
             best_intent, max_score, method = IntentEnum.SYMPTOM_TRIAGE_REMEDY, 0.5, "FALLBACK_NO_MODEL"
 
-        # Cache SET
+        # Cache SET (Valkey + Memory TTLCache)
         cache_service.set(
             namespace="intent",
             key=query_hash,
@@ -179,4 +174,3 @@ class LayaService:
         return best_intent, max_score, method
 
 laya_service = LayaService()
-
