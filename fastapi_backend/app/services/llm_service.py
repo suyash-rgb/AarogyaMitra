@@ -39,7 +39,7 @@ class LLMService:
             self._model = Llama(
                 model_path=self.model_path,
                 n_ctx=2048,
-                n_threads=os.cpu_count() or 4,
+                n_threads=min(os.cpu_count() or 4, 6),
                 verbose=False
             )
             logger.info(f"Model loaded successfully in {time.time() - start_time:.2f}s")

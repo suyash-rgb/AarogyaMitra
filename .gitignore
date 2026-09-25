@@ -154,3 +154,8 @@ designs/
 # Ignore fine-tuning datasets (both clean and unclean)
 datasets/fine-tuning/
 
+
+# Ignore hackathon scripts and logs
+/fastapi_backend/logs/
+github_guardrail_issues.txt
+ppt.py
