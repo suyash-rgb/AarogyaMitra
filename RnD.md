@@ -653,3 +653,23 @@ When a user asks, *"Show me maternal health schemes in Madhya Pradesh for BPL fa
 
 This approach guarantees high performance, 100% uptime for the user, and a highly polished, native experience!
 
+# State Governments Addendums in PM-JAY
+Why are there State Addendums?
+In the Indian Constitution (Seventh Schedule), Public Health and Sanitation is a State Subject.
+
+The Central Government runs PM-JAY on a 60:40 funding model (Centre pays 60%, State pays 40%) based strictly on the Central SECC 2011 census database [source: 1.2.2, 1.2.3].
+
+However, almost every state government has expanded this using 100% state funds:
+
+Haryana: Chirayu Haryana (expands coverage using Family ID / PPP) [source: 1.2.2].
+
+Karnataka: Ayushman Bharat - Arogya Karnataka.
+
+Tamil Nadu: CMCHIS merged with PM-JAY.
+
+Andhra Pradesh / Telangana: Aarogyasri.
+
+
+Future implementation in the project: 
+
+"AarogyaMitra features a Federated State-Aware RAG Engine. Because Indian health financing is a concurrent venture between Centre and State, our retrieval layer uses metadata-gated partitions. We demonstrate this via our deep pilot in Haryana (Chirayu + CCHF integration), proving the pipeline scales to any State Health Agency (SHA) simply by registering their state addendum."
