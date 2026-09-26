@@ -1,6 +1,0 @@
-Refactor: Remove Laya regex override and enforce cache hits
-
-- Removed rigid emergency_regex override pre-inference to allow Laya ONNX to fully evaluate context.
-- Validated exact query spam defense mechanism ensuring 2-tier instant Cache HIT without inference.
-
-Fixes #33, Fixes #34
