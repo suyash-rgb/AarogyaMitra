@@ -33,6 +33,7 @@ import re
 import numpy as np
 from typing import List, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.llm_service import get_llm_service
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy import func, or_, text
@@ -307,8 +308,6 @@ class HealthCareSchemesService:
 
         context_str = "\n".join(context_passages)
 
-        groq_api_key = os.environ.get("FASTAPI_GROK_API_KEY") or os.environ.get("GROQ_API_KEY") or ""
-        groq_model = os.environ.get("FASTAPI_GROK_MODEL")
         llm_answer = ""
 
         if not retrieved_chunks:
@@ -318,11 +317,9 @@ class HealthCareSchemesService:
                 retrieved_chunks=[]
             )
 
-        if groq_api_key:
-            try:
-                client = groq.Groq(api_key=groq_api_key)
-                prompt = f"""You are ArogyaMitra, an empathetic rural healthcare AI facilitator.
-The user asked: "{user_query}"
+        try:
+            llm_service = get_llm_service()
+            prompt = f'''The user asked: "{user_query}"
 
 We retrieved the following candidate health schemes:
 {context_str}
@@ -331,21 +328,15 @@ INSTRUCTIONS:
 1. Give a warm, empathetic 1-2 sentence greeting acknowledging their situation.
 2. Briefly present the candidate schemes in bullet points without declaring any single scheme as the absolute top or perfect match.
 3. Keep your total response under 100-120 words.
-4. Invite the user to ask follow-up questions (e.g. "Would you like to know the eligibility criteria, application process, or required documents for any of these?").
+4. Invite the user to ask follow-up questions.
 5. End your response exactly with this sentence: "Please select a scheme below for full details."
-"""
-                response = client.chat.completions.create(
-                    model=groq_model,
-                    messages=[
-                        {"role": "system", "content": "You are ArogyaMitra, a concise healthcare AI facilitator. Provide brief neutral overviews and invite follow-up questions."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.3,
-                    max_tokens=220
-                )
-                llm_answer = response.choices[0].message.content.strip() if response.choices[0].message.content else ""
-            except Exception as e:
-                llm_answer = ""
+'''
+            sys_prompt = "You are ArogyaMitra, a concise healthcare AI facilitator. Provide brief neutral overviews and invite follow-up questions."
+            llm_res = llm_service.generate_response(prompt=prompt, system_prompt=sys_prompt, target_intent="GOVT_SCHEME_ELIGIBILITY", max_tokens=256, temperature=0.3)
+            llm_answer = llm_res.get("response", "").strip()
+        except Exception as e:
+            logger.error(f"Failed to generate LLM response using Qwen: {e}")
+            llm_answer = "" 
 
         if not llm_answer and top_items:
             rrf_score, score, emb_obj, scheme_name, scheme_state = top_items[0]
