@@ -8,6 +8,7 @@ from typing import Optional, Dict, Any
 
 from app.utils.language import INDIC_LANGUAGE_TAGS, FALLBACK_LANGUAGE
 from app.services.cache_service import cache_service
+from app.services.telemetry_service import telemetry_service
 
 logger = logging.getLogger(__name__)
 
@@ -67,113 +68,129 @@ class VoiceService:
     def _get_tts_lang_code(self, lang_tag: str) -> str:
         return INDIC_TO_TTS_LANG.get(lang_tag, "hi")
 
-    async def speech_to_text(self, audio_bytes: bytes, lang_tag: str = "hin_Deva") -> Dict[str, Any]:
+    async def speech_to_text(self, audio_bytes: bytes, lang_tag: str = "hin_Deva", trace_id: Optional[str] = None) -> Dict[str, Any]:
         if not audio_bytes:
             raise ValueError("Audio data cannot be empty.")
 
-        stt_lang = self._get_stt_lang_code(lang_tag)
+        meta = {"lang_tag": lang_tag, "audio_size": len(audio_bytes)}
 
-        def _recognize_sync():
-            try:
-                import speech_recognition as sr
-                recognizer = sr.Recognizer()
-                audio_file = io.BytesIO(audio_bytes)
-                with sr.AudioFile(audio_file) as source:
-                    audio_data = recognizer.record(source)
-                
-                text = recognizer.recognize_google(audio_data, language=stt_lang)
-                return {
-                    "transcription": text,
-                    "detected_language": lang_tag,
-                    "success": True
-                }
-            except Exception as e:
-                logger.warning(f"STT audio recognition note: {e}")
-                return {
-                    "transcription": "[Voice Query Received]",
-                    "detected_language": lang_tag,
-                    "success": True,
-                    "note": str(e)
-                }
+        with telemetry_service.span("voice_stt_recognition", trace_id=trace_id, meta=meta) as span:
+            stt_lang = self._get_stt_lang_code(lang_tag)
 
-        return await asyncio.to_thread(_recognize_sync)
+            def _recognize_sync():
+                try:
+                    import speech_recognition as sr
+                    recognizer = sr.Recognizer()
+                    audio_file = io.BytesIO(audio_bytes)
+                    with sr.AudioFile(audio_file) as source:
+                        audio_data = recognizer.record(source)
+                    
+                    text = recognizer.recognize_google(audio_data, language=stt_lang)
+                    return {
+                        "transcription": text,
+                        "detected_language": lang_tag,
+                        "success": True
+                    }
+                except Exception as e:
+                    logger.warning(f"STT audio recognition note: {e}")
+                    return {
+                        "transcription": "[Voice Query Received]",
+                        "detected_language": lang_tag,
+                        "success": True,
+                        "note": str(e)
+                    }
 
-    async def text_to_speech(self, text: str, lang_tag: str = "hin_Deva", slow: bool = False) -> Dict[str, Any]:
+            res = await asyncio.to_thread(_recognize_sync)
+            span.set_metric("transcription_len", len(res.get("transcription", "")))
+            return res
+
+    async def text_to_speech(self, text: str, lang_tag: str = "hin_Deva", slow: bool = False, trace_id: Optional[str] = None) -> Dict[str, Any]:
         if not text or not text.strip():
             raise ValueError("Text content cannot be empty.")
 
         from app.services.tts_load_balancer import tts_load_balancer
-        return await tts_load_balancer.text_to_speech(text=text, lang_tag=lang_tag, slow=slow)
+        return await tts_load_balancer.text_to_speech(text=text, lang_tag=lang_tag, slow=slow, trace_id=trace_id)
 
     async def process_voice_chat(
         self, 
         audio_bytes: bytes, 
         lang_tag: str = "hin_Deva",
-        db_session = None
+        db_session = None,
+        trace_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        stt_result = await self.speech_to_text(audio_bytes, lang_tag)
-        transcribed_text = stt_result.get("transcription", "")
-        
-        if not transcribed_text or transcribed_text == "[Voice Query Received]":
-            transcribed_text = "Ayushman Bharat scheme details"
+        t_id = trace_id or telemetry_service.generate_trace_id()
+        meta = {"lang_tag": lang_tag, "audio_bytes": len(audio_bytes)}
 
-        from app.services.translation_service import TranslationService
-        from app.services.user_intent_classifier_service import UserIntentClassifierService
-        from app.services.healthcare_schemes_service import HealthCareSchemesService
+        with telemetry_service.span("full_voice_pipeline", trace_id=t_id, meta=meta) as span:
+            stt_result = await self.speech_to_text(audio_bytes, lang_tag, trace_id=t_id)
+            transcribed_text = stt_result.get("transcription", "")
+            
+            if not transcribed_text or transcribed_text == "[Voice Query Received]":
+                transcribed_text = "Ayushman Bharat scheme details"
 
-        translation_service = TranslationService()
-        intent_service = UserIntentClassifierService()
-        schemes_service = HealthCareSchemesService()
+            from app.services.translation_service import translation_service
+            from app.services.laya_service import laya_service
+            from app.services.healthcare_schemes_service import HealthCareSchemesService
 
-        query_in_english = transcribed_text
-        if lang_tag != "eng_Latn" and lang_tag in INDIC_LANGUAGE_TAGS:
+            schemes_service = HealthCareSchemesService()
+
+            query_in_english = transcribed_text
+            if lang_tag != "eng_Latn" and lang_tag in INDIC_LANGUAGE_TAGS:
+                try:
+                    query_in_english = await translation_service.translate(
+                        text=transcribed_text,
+                        src_lang=lang_tag,
+                        tgt_lang="eng_Latn",
+                        trace_id=t_id
+                    )
+                except Exception as e:
+                    logger.warning(f"Translation to English skipped: {e}")
+
             try:
-                query_in_english = await translation_service.translate(
-                    text=transcribed_text,
-                    src_lang=lang_tag,
-                    tgt_lang="eng_Latn"
-                )
+                intent_enum, score, method = laya_service.classify_intent(query_in_english, trace_id=t_id)
+                intent_info = {
+                    "intent": intent_enum.value if hasattr(intent_enum, "value") else str(intent_enum),
+                    "confidence": score,
+                    "method": method
+                }
             except Exception as e:
-                logger.warning(f"Translation to English skipped: {e}")
+                intent_info = {"intent": "govt_schemes_discovery", "confidence": 0.8, "method": "FALLBACK"}
+            
+            try:
+                raw_rag_response = await schemes_service.perform_rag_hybrid_search(
+                    user_query=query_in_english,
+                    db=db_session,
+                    trace_id=t_id
+                )
+                english_ai_response = raw_rag_response.answer or "I am here to help you with health schemes and facilities."
+            except Exception as e:
+                logger.warning(f"RAG query note: {e}")
+                english_ai_response = "Ayushman Bharat PM-JAY provides health coverage up to Rs. 5 Lakh per family per year for secondary and tertiary care hospitalization."
 
-        try:
-            intent_enum, score, method = intent_service.classify_intent(query_in_english)
-            intent_info = {
-                "intent": intent_enum.value if hasattr(intent_enum, "value") else str(intent_enum),
-                "confidence": score,
-                "method": method
+            final_text_response = english_ai_response
+            if lang_tag != "eng_Latn" and lang_tag in INDIC_LANGUAGE_TAGS:
+                try:
+                    final_text_response = await translation_service.translate(
+                        text=english_ai_response,
+                        src_lang="eng_Latn",
+                        tgt_lang=lang_tag,
+                        trace_id=t_id
+                    )
+                except Exception as e:
+                    logger.warning(f"Translation back to {lang_tag} skipped: {e}")
+
+            tts_res = await self.text_to_speech(final_text_response, lang_tag, trace_id=t_id)
+
+            span.set_metric("transcribed_len", len(transcribed_text))
+            span.set_metric("final_response_len", len(final_text_response))
+
+            return {
+                "trace_id": t_id,
+                "transcribed_query": transcribed_text,
+                "text_response": final_text_response,
+                "intent_classification": intent_info,
+                "src_lang": lang_tag,
+                "audio_base64": tts_res.get("audio_base64")
             }
-        except Exception as e:
-            intent_info = {"intent": "govt_schemes_discovery", "confidence": 0.8, "method": "FALLBACK"}
-        
-        try:
-            raw_rag_response = await schemes_service.rag_query_schemes(
-                user_query=query_in_english,
-                db=db_session
-            )
-            english_ai_response = raw_rag_response.get("answer", "I am here to help you with health schemes and facilities.")
-        except Exception as e:
-            logger.warning(f"RAG query note: {e}")
-            english_ai_response = "Ayushman Bharat PM-JAY provides health coverage up to Rs. 5 Lakh per family per year for secondary and tertiary care hospitalization."
 
-        final_text_response = english_ai_response
-        if lang_tag != "eng_Latn" and lang_tag in INDIC_LANGUAGE_TAGS:
-            try:
-                final_text_response = await translation_service.translate(
-                    text=english_ai_response,
-                    src_lang="eng_Latn",
-                    tgt_lang=lang_tag
-                )
-            except Exception as e:
-                logger.warning(f"Translation back to {lang_tag} skipped: {e}")
-
-        tts_res = await self.text_to_speech(final_text_response, lang_tag)
-
-        return {
-            "transcribed_query": transcribed_text,
-            "text_response": final_text_response,
-            "intent_classification": intent_info,
-            "src_lang": lang_tag,
-            "audio_base64": tts_res.get("audio_base64")
-        }
-
+voice_service = VoiceService()

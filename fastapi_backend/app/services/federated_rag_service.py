@@ -1,10 +1,11 @@
-# services/federated_rag_service.py / app/services/federated_rag_service.py
 from typing import List, Dict, Optional
 from pathlib import Path
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
 from fastembed import TextEmbedding
 import logging
+
+from app.services.telemetry_service import telemetry_service
 
 logger = logging.getLogger(__name__)
 
@@ -37,46 +38,56 @@ class FederatedRAGService:
         query: str,
         collection_name: str,
         user_state: Optional[str] = "ALL",
-        limit: int = 4
+        limit: int = 4,
+        trace_id: Optional[str] = None
     ) -> List[Dict]:
-        query_vector = list(self.embed_model.embed([query]))[0].tolist()
+        meta = {"collection": collection_name, "user_state": user_state, "limit": limit, "query_len": len(query)}
 
-        # Dynamic State Partitioning: Central baseline ('ALL') + Specific state ('HR', etc.)
-        state_code_filter = (user_state or "ALL").upper().strip()
-        state_filter = models.Filter(
-            should=[
-                models.FieldCondition(
-                    key="metadata.state_code",
-                    match=models.MatchValue(value="ALL")
-                ),
-                models.FieldCondition(
-                    key="metadata.state_code",
-                    match=models.MatchValue(value=state_code_filter)
+        with telemetry_service.span("qdrant_vector_retrieval", trace_id=trace_id, meta=meta) as span:
+            try:
+                query_vector = list(self.embed_model.embed([query]))[0].tolist()
+
+                state_code_filter = (user_state or "ALL").upper().strip()
+                state_filter = models.Filter(
+                    should=[
+                        models.FieldCondition(
+                            key="metadata.state_code",
+                            match=models.MatchValue(value="ALL")
+                        ),
+                        models.FieldCondition(
+                            key="metadata.state_code",
+                            match=models.MatchValue(value=state_code_filter)
+                        )
+                    ]
                 )
-            ]
-        )
 
-        try:
-            search_result = self.client.query_points(
-                collection_name=collection_name,
-                query=query_vector,
-                query_filter=state_filter,
-                limit=limit
-            ).points
+                search_result = self.client.query_points(
+                    collection_name=collection_name,
+                    query=query_vector,
+                    query_filter=state_filter,
+                    limit=limit
+                ).points
 
-            return [
-                {
-                    "text": p.payload.get("text", ""),
-                    "source": p.payload.get("metadata", {}).get("source_file", ""),
-                    "scheme": p.payload.get("metadata", {}).get("scheme_name", ""),
-                    "jurisdiction": p.payload.get("metadata", {}).get("jurisdiction_level", "CENTRAL"),
-                    "state": p.payload.get("metadata", {}).get("state_code", "ALL"),
-                    "score": round(p.score, 4)
-                }
-                for p in search_result
-            ]
-        except Exception as e:
-            logger.error(f"Error querying Qdrant collection '{collection_name}': {e}", exc_info=True)
-            return []
+                results = [
+                    {
+                        "text": p.payload.get("text", ""),
+                        "source": p.payload.get("metadata", {}).get("source_file", ""),
+                        "scheme": p.payload.get("metadata", {}).get("scheme_name", ""),
+                        "jurisdiction": p.payload.get("metadata", {}).get("jurisdiction_level", "CENTRAL"),
+                        "state": p.payload.get("metadata", {}).get("state_code", "ALL"),
+                        "score": round(p.score, 4)
+                    }
+                    for p in search_result
+                ]
+
+                span.set_metric("retrieved_count", len(results))
+                if results:
+                    span.set_metric("top_score", results[0]["score"])
+                return results
+
+            except Exception as e:
+                logger.error(f"Error querying Qdrant collection '{collection_name}': {e}", exc_info=True)
+                span.record_error(e)
+                return []
 
 federated_rag_service = FederatedRAGService()

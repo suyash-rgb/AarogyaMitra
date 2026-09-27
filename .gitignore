@@ -163,3 +163,5 @@ ppt.py
 # RAG Vector DB storage and untracked documents
 fastapi_backend/data/qdrant_storage/
 fastapi_backend/datasets/rag vector-db/*.md
+
+*.jsonl

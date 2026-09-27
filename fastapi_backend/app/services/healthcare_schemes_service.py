@@ -1,6 +1,7 @@
 import hashlib
 import logging
 from app.services.cache_service import cache_service
+from app.services.telemetry_service import telemetry_service
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -166,13 +167,13 @@ class HealthCareSchemesService:
         return result.scalars().first()
 
     @staticmethod
-    @staticmethod
     async def perform_rag_hybrid_search(
         db: AsyncSession,
         user_query: str,
         state: Optional[str] = None,
         top_k: int = 4,
-        min_score: float = 0.58
+        min_score: float = 0.58,
+        trace_id: Optional[str] = None
     ) -> RAGSearchResponse:
         query_clean = user_query.lower().strip()
         state_clean = (state or "").lower().strip()
@@ -332,7 +333,7 @@ INSTRUCTIONS:
 5. End your response exactly with this sentence: "Please select a scheme below for full details."
 '''
             sys_prompt = "You are ArogyaMitra, a concise healthcare AI facilitator. Provide brief neutral overviews and invite follow-up questions."
-            llm_res = llm_service.generate_response(prompt=prompt, system_prompt=sys_prompt, target_intent="GOVT_SCHEME_ELIGIBILITY", max_tokens=256, temperature=0.3)
+            llm_res = llm_service.generate_response(prompt=prompt, system_prompt=sys_prompt, target_intent="GOVT_SCHEME_ELIGIBILITY", max_tokens=256, temperature=0.3, trace_id=trace_id)
             llm_answer = llm_res.get("response", "").strip()
         except Exception as e:
             logger.error(f"Failed to generate LLM response using Qwen: {e}")
