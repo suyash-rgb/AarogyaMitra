@@ -6,17 +6,17 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 
+from app.core.prompts import (
+    get_system_prompt_for_intent,
+    build_dynamic_user_prompt,
+    IntentEnum
+)
 from app.services.telemetry_service import telemetry_service
 
 logger = logging.getLogger(__name__)
 
 class LLMService:
     _instance: Optional['LLMService'] = None
-
-    DEFAULT_SYSTEM_PROMPT = (
-        "You are AarogyaMitra, an empathetic, highly knowledgeable AI healthcare assistant for rural India. "
-        "Provide accurate medical advice, guidance, and first-aid steps in clear bullet points."
-    )
 
     def __init__(self, model_path: Optional[str] = None):
         if model_path is None:
@@ -65,6 +65,7 @@ class LLMService:
         prompt: str,
         system_prompt: Optional[str] = None,
         target_intent: Optional[str] = None,
+        context: Optional[str] = None,
         max_tokens: int = 512,
         temperature: float = 0.7,
         top_p: float = 0.9,
@@ -75,22 +76,31 @@ class LLMService:
         if self._model is None:
             self._initialize_model()
 
-        sys_prompt = system_prompt or self.DEFAULT_SYSTEM_PROMPT
+        # Dynamic System Prompt Selection based on Classified Intent
+        sys_prompt = get_system_prompt_for_intent(intent=target_intent, custom_override=system_prompt)
+        
+        # Context-aware user prompt enhancement if context is provided
+        effective_user_prompt = build_dynamic_user_prompt(
+            user_query=prompt,
+            intent=target_intent,
+            context=context
+        ) if context else prompt
+
         formatted_prompt = (
             f"<|im_start|>system\n{sys_prompt}<|im_end|>\n"
-            f"<|im_start|>user\n{prompt}<|im_end|>\n"
+            f"<|im_start|>user\n{effective_user_prompt}<|im_end|>\n"
             f"<|im_start|>assistant\n"
         )
 
         stop_tokens = stop or ["<|im_end|>", "<|endoftext|>"]
         meta_info = {
             "model_name": os.path.basename(self.model_path),
-            "target_intent": target_intent,
-            "prompt_length": len(prompt)
+            "target_intent": target_intent or IntentEnum.DEFAULT.value,
+            "prompt_length": len(effective_user_prompt)
         }
 
         with telemetry_service.span("qwen_llm_generation", trace_id=trace_id, meta=meta_info) as span:
-            logger.info(f"Generating response from fine-tuned LLM service... (repeat_penalty={repeat_penalty})")
+            logger.info(f"Generating response from fine-tuned LLM service for intent '{target_intent}' (repeat_penalty={repeat_penalty})")
             start_perf = time.perf_counter()
             
             raw_text_parts = []
@@ -155,7 +165,7 @@ class LLMService:
                 "ttft_ms": round(ttft_ms, 2) if ttft_ms else None,
                 "usage": {"completion_tokens": token_count},
                 "model_name": os.path.basename(self.model_path),
-                "target_intent": target_intent
+                "target_intent": target_intent or IntentEnum.DEFAULT.value
             }
 
             try:
@@ -166,7 +176,7 @@ class LLMService:
                 log_entry = {
                     "timestamp": datetime.utcnow().isoformat() + "Z",
                     "trace_id": span.trace_id,
-                    "prompt": prompt,
+                    "prompt": effective_user_prompt,
                     "system_prompt": sys_prompt,
                     "target_intent": target_intent,
                     "max_tokens": max_tokens,

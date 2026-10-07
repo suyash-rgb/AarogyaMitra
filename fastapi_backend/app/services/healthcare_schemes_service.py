@@ -1,3 +1,4 @@
+from app.core.prompts import IntentEnum, build_dynamic_user_prompt
 import hashlib
 import logging
 from app.services.cache_service import cache_service
@@ -320,20 +321,14 @@ class HealthCareSchemesService:
 
         try:
             llm_service = get_llm_service()
-            prompt = f'''The user asked: "{user_query}"
-
-We retrieved the following candidate health schemes:
-{context_str}
-
-INSTRUCTIONS:
-1. Give a warm, empathetic 1-2 sentence greeting acknowledging their situation.
-2. Briefly present the candidate schemes in bullet points without declaring any single scheme as the absolute top or perfect match.
-3. Keep your total response under 100-120 words.
-4. Invite the user to ask follow-up questions.
-5. End your response exactly with this sentence: "Please select a scheme below for full details."
-'''
-            sys_prompt = "You are ArogyaMitra, a concise healthcare AI facilitator. Provide brief neutral overviews and invite follow-up questions."
-            llm_res = llm_service.generate_response(prompt=prompt, system_prompt=sys_prompt, target_intent="GOVT_SCHEME_ELIGIBILITY", max_tokens=256, temperature=0.3, trace_id=trace_id)
+            llm_res = llm_service.generate_response(
+                prompt=user_query,
+                context=context_str,
+                target_intent=IntentEnum.GOVT_SCHEME_ELIGIBILITY.value,
+                max_tokens=256,
+                temperature=0.3,
+                trace_id=trace_id
+            )
             llm_answer = llm_res.get("response", "").strip()
         except Exception as e:
             logger.error(f"Failed to generate LLM response using Qwen: {e}")

@@ -1,22 +1,20 @@
-feat: Telemetry Service
+feat: dynamic prompt injection
 
-Span & Trace Context: Automatically generates unique trace_id values to group multi-stage pipeline turns.
-Latency & TTFT Tracking: Records precise execution time (duration_ms) and Time To First Token (ttft_ms) for streaming LLM generation and voice synthesis.
-Thread-Safe JSONL Export: Continuously appends structured log events to fastapi_backend/logs/pipeline_telemetry.jsonl (and human-readable table entries to pipeline_telemetry.md).
-Node Analytics & Performance Summary: Computes real-time average latency, P95 latency, min/max duration, TTFT stats, and error rates per pipeline node.
+New Module: 
 
-Refactoring:
-LayaService (laya_service.py): Instrumenting ONNX intent classification (laya_intent_classifier).
-FederatedRAGService (federated_rag_service.py): Instrumenting Qdrant vector retrieval (qdrant_vector_retrieval).
-LLMService (llm_service.py): Instrumenting Qwen LLM inference, capturing exact streaming TTFT (qwen_llm_generation), generated token counts, and token generation speed.
-TranslationService (translation_service.py): Instrumenting CTranslate2 NLLB translation (nllb_translation).
-HealthcareSchemesService (healthcare_schemes_service.py): Instrumenting hybrid scheme RAG search pipeline (healthcare_schemes_rag_pipeline).
-VoiceService & TTSLoadBalancer (voice_service.py & tts_load_balancer.py): Instrumenting speech-to-text recognition (voice_stt_recognition), TTS speech synthesis (tts_speech_synthesis), and full voice pipeline orchestration (full_voice_pipeline).
+fastapi_backend/app/core/prompts.py
+Created a dedicated prompt management file featuring:
 
-API Endpoints added: 
-POST /api/v1/logs/: Intake frontend log messages and write them to pipeline telemetry.
-POST /api/v1/logs/span: Custom span recording endpoint.
-GET /api/v1/logs/telemetry: Query recent telemetry log entries by node or limit.
-GET /api/v1/logs/summary: Get per-node execution breakdown (average latency, TTFT, P95, error count).
+IntentEnum: Strongly typed intent keys.
+SYSTEM_PROMPTS: Dict lookup mapping all intents.
+get_system_prompt_for_intent(intent, custom_override): Retrieves the intent prompt with support for overrides.
+build_dynamic_user_prompt(user_query, intent, context): Formats RAG chunks and document data into intent-optimized instructions.
+Refactored Services:
 
-Updated .gitignore to explicitly ignore *.jsonl files and ensured logs/ content is kept out of Git tracking.
+
+app/services/llm_service.py
+: generate_response() now automatically resolves the system prompt via get_system_prompt_for_intent(target_intent) and formats context via build_dynamic_user_prompt().
+
+
+app/services/healthcare_schemes_service.py
+: Removed redundant hardcoded prompt strings in favor of the dynamic builder with target_intent=IntentEnum.GOVT_SCHEME_ELIGIBILITY.value.
